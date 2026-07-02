@@ -1,0 +1,138 @@
+@using System.Security.Claims
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - نظام إدارة الأعمال</title>
+    
+    <!-- Local Bootstrap Core Styles -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    
+    <!-- Icons (Bootstrap Icons CDN) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    
+    <!-- Premium Obsidian Dark Theme Styles -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Bms.Web.styles.css" asp-append-version="true" />
+    
+
+
+    <!-- CSRF Anti-Forgery Token for ES6 AJAX calls -->
+    @Html.AntiForgeryToken()
+</head>
+<body>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <!-- Sidebar Navigation -->
+        <aside class="bms-sidebar">
+            <a href="/" class="bms-brand">
+                <i class="bi bi-grid-1x2-fill"></i>
+                <span>بوابة المسافرين</span>
+            </a>
+            
+            <nav class="sidebar-nav">
+                <a href="/" class="nav-item-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard" ? "active" : "")">
+                    <i class="bi bi-speedometer2"></i>
+                    لوحة التحكم
+                </a>
+                
+                @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+                {
+                    <a href="/Users" class="nav-item-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Users" ? "active" : "")">
+                        <i class="bi bi-people-fill"></i>
+                        دليل الموظفين
+                    </a>
+                }
+                
+                <a href="/Bookings" class="nav-item-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Bookings" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">
+                    <i class="bi bi-journal-text"></i>
+                    حجوزات المسافرين
+                </a>
+
+                <a href="/Bookings/Passengers" class="nav-item-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Bookings" && ViewContext.RouteData.Values["action"]?.ToString() == "Passengers" ? "active" : "")">
+                    <i class="bi bi-person-rolodex"></i>
+                    بيانات المسافرين (CRM)
+                </a>
+                
+                <a href="/Safe" class="nav-item-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Safe" ? "active" : "")">
+                    <i class="bi bi-wallet2"></i>
+                    خزينة المعاملات المالية
+                </a>
+                
+                <a href="/Portal" class="nav-item-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Portal" ? "active" : "")">
+                    <i class="bi bi-globe-americas"></i>
+                    بوابات التأشيرات (BW)
+                </a>
+                
+                <a href="/Partnership" class="nav-item-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Partnership" ? "active" : "")">
+                    <i class="bi bi-shield-check"></i>
+                    رأس مال الشركاء (الضمان)
+                </a>
+
+                <a href="/ExternalVisas" class="nav-item-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "ExternalVisas" ? "active" : "")">
+                    <i class="bi bi-airplane-fill"></i>
+                    تأشيرات خارجي
+                </a>
+            </nav>
+            
+            <div class="bms-user-profile mt-auto">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; font-weight: 600;">
+                        @User.FindFirst(ClaimTypes.GivenName)?.Value?[0]
+                    </div>
+                    <div style="line-height: 1.2;">
+                        <div class="fw-semibold text-white" style="font-size: 0.9rem;">@User.Identity.Name</div>
+                        <small class="text-muted" style="font-size: 0.75rem;">@User.FindFirst(ClaimTypes.Role)?.Value</small>
+                    </div>
+                </div>
+                <a href="/Account/Logout" class="text-danger" data-bs-toggle="tooltip" title="تسجيل الخروج">
+                    <i class="bi bi-box-arrow-right" style="font-size: 1.25rem;"></i>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Wrapper content -->
+        <div class="bms-main-content">
+            <header class="content-header glass-card p-3 mb-4 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-outline-secondary d-lg-none" id="sidebarToggle">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <h4 class="text-white fw-bold m-0">@ViewData["PageHeader"]</h4>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+
+                    <div class="text-muted small">
+                        <i class="bi bi-clock-history me-1"></i> @DateTime.UtcNow.ToString("dd MMM yyyy")
+                    </div>
+                </div>
+            </header>
+            
+            <main role="main">
+                @RenderBody()
+            </main>
+        </div>
+    }
+    else
+    {
+        <!-- Anonymous Layout (Login/Access Denied) -->
+        <main role="main">
+            @RenderBody()
+        </main>
+    }
+
+    <!-- Core Local JavaScript Scripts -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- JQuery Validation & Unobtrusive Scripts -->
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+    
+    <!-- ES6 AJAX & UI Utility Helpers -->
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,28 @@
+## Ignore Visual Studio Temporary Files, Builds, and Metadata
+.vs/
+.vscode/
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+## Ignore EF Core migrations cache or temporary DBs
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+## User secrets / local configuration secrets
+appsettings.Development.json
+appsettings.local.json
+secrets.json
+
+## Antigravity workspace files
+.agents/
+.gemini/

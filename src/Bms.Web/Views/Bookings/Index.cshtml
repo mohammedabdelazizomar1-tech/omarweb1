@@ -1,0 +1,150 @@
+@model IEnumerable<Bms.Application.DTOs.BookingDto>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "دفتر حجوزات المسافرين";
+}
+
+<div class="glass-card p-4">
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+        <div>
+            <h5 class="text-white fw-bold m-0">الدليل الرئيسي لحجوزات المسافرين</h5>
+            <p class="text-muted small m-0">إدارة ملفات التأشيرات وتذاكر الطيران ومستخلصات الحسابات المالية عبر الشركاء</p>
+        </div>
+        
+        <div class="d-flex align-items-center gap-2">
+            <div class="input-group" style="width: 250px;">
+                <span class="input-group-text bg-transparent border-end-0" style="border-color: var(--border-color); color: var(--text-secondary);">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text" id="bookingSearch" class="form-control border-start-0 text-white" placeholder="ابحث عن مسافر..." autocomplete="off" />
+            </div>
+            
+            <a href="/Bookings/Create" class="btn btn-primary">
+                <i class="bi bi-file-earmark-plus-fill me-2"></i> تسجيل حجز جديد
+            </a>
+        </div>
+    </div>
+
+    <!-- Spreadsheet Scroll wrapper -->
+    <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
+        <table class="bms-table text-nowrap table-hover" id="bookingsTable" style="font-size: 0.85rem;">
+            <thead class="sticky-top bg-light" style="z-index: 1;">
+                <tr>
+                    <th>رقم الملف</th>
+                    <th>اسم المسافر</th>
+                    <th>جواز السفر</th>
+                    <th>التبعية (شيت)</th>
+                    <th class="text-end">نت (المنصة)</th>
+                    <th class="text-end">باركود</th>
+                    <th class="text-end">الشركة</th>
+                    <th class="text-end">المطار</th>
+                    <th class="text-end">البرنامج</th>
+                    <th class="text-end">تذكرة الطيران</th>
+                    <th class="text-end">الباص</th>
+                    <th class="text-end fw-bold">إجمالي التكلفة</th>
+                    <th class="text-end fw-bold text-info">سعر البيع</th>
+                    <th class="text-end fw-bold text-success">صافي الربح</th>
+                    <th class="text-end text-success">المدفوع</th>
+                    <th class="text-end text-warning">المتبقي</th>
+                    <th class="text-center">البوابة</th>
+                    <th class="text-end">العمليات</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model == null || !Model.Any())
+                {
+                    <tr>
+                        <td colspan="18" class="text-center text-muted py-5">لا توجد سجلات حجز مسافرين مسجلة حالياً.</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var b in Model)
+                    {
+                        <tr class="booking-row">
+                            <td class="fw-bold text-white">@b.BookingNumber</td>
+                            <td class="fw-semibold text-white" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis;">@b.PassengerName</td>
+                            <td class="font-monospace">@b.PassengerPassport</td>
+                            <td>شيت: @b.PartnerName</td>
+                            <td class="text-end">$@b.NetCost.ToString("N2")</td>
+                            <td class="text-end">$@b.BarcodeCost.ToString("N2")</td>
+                            <td class="text-end">$@b.CompanyCost.ToString("N2")</td>
+                            <td class="text-end">$@b.AirportCost.ToString("N2")</td>
+                            <td class="text-end">$@b.ProgramCost.ToString("N2")</td>
+                            <td class="text-end">$@b.TicketCost.ToString("N2")</td>
+                            <td class="text-end">$@b.BusCost.ToString("N2")</td>
+                            <td class="text-end fw-bold text-white">$@b.TotalCost.ToString("N2")</td>
+                            <td class="text-end fw-bold text-info">$@b.SellingPrice.ToString("N2")</td>
+                            <td class="text-end fw-bold text-success">$@b.NetProfit.ToString("N2")</td>
+                            <td class="text-end text-success">$@b.PaymentsCollected.ToString("N2")</td>
+                            <td class="text-end text-warning fw-semibold">
+                                @if (b.RemainingBalance > 0)
+                                {
+                                    <span>$@b.RemainingBalance.ToString("N2")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                @if (b.HasQrCode)
+                                {
+                                    <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-50">بـ QR</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary bg-opacity-25 text-secondary border border-secondary border-opacity-50">بدون QR</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-1">
+                                    <a href="/Bookings/Edit/@b.Id" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="تعديل تفاصيل الملف">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteBooking('@b.Id', '@b.PassengerName')" data-bs-toggle="tooltip" title="حذف سجل الحجز">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Client-side search filters
+        document.getElementById("bookingSearch").addEventListener("input", (e) => {
+            const query = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll(".booking-row");
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(query) ? "" : "none";
+            });
+        });
+
+        // AJAX deletion
+        async function deleteBooking(id, travelerName) {
+            if (!confirm(`هل أنت متأكد من حذف ملف حجز المسافر '${travelerName}'؟`)) {
+                return;
+            }
+
+            try {
+                const result = await bmsAjax(`/Bookings/Delete/${id}`, "POST");
+                if (result.success) {
+                    bmsAlert(result.message, "success");
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    bmsAlert(result.message, "danger");
+                }
+            } catch (error) {
+                console.error("Failed to delete booking:", error);
+            }
+        }
+    </script>
+}

@@ -1,0 +1,248 @@
+@model IEnumerable<Bms.Application.DTOs.UserDto>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Employee Directory";
+    var departments = ViewBag.Departments as IEnumerable<Bms.Application.DTOs.DepartmentDto> ?? new List<Bms.Application.DTOs.DepartmentDto>();
+}
+
+<!-- Tab Headers -->
+<ul class="nav nav-pills gap-2 mb-4" id="directoryTab" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="btn btn-outline-primary active px-4" id="employees-tab" data-bs-toggle="tab" data-bs-target="#employees-content" type="button" role="tab" aria-selected="true">
+            <i class="bi bi-people-fill me-2"></i> Employees List
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="btn btn-outline-primary px-4" id="departments-tab" data-bs-toggle="tab" data-bs-target="#departments-content" type="button" role="tab" aria-selected="false">
+            <i class="bi bi-diagram-3-fill me-2"></i> Departments
+        </button>
+    </li>
+</ul>
+
+<!-- Tab Content -->
+<div class="tab-content" id="directoryTabContent">
+    
+    <!-- Tab 1: Employee Directory -->
+    <div class="tab-pane fade show active" id="employees-content" role="tabpanel" aria-labelledby="employees-tab">
+        <div class="glass-card p-4">
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+                <div>
+                    <h5 class="text-white fw-bold m-0">Employee Directory</h5>
+                    <p class="text-muted small m-0">Manage system login credentials and roles</p>
+                </div>
+                
+                <div class="d-flex align-items-center gap-2">
+                    <div class="input-group" style="width: 250px;">
+                        <span class="input-group-text bg-transparent border-end-0" style="border-color: var(--border-color); color: var(--text-secondary);">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" id="employeeSearch" class="form-control border-start-0 text-white" placeholder="Search employees..." autocomplete="off" />
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="openCreateUserModal()">
+                        <i class="bi bi-person-plus-fill me-2"></i> Register Employee
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="bms-table" id="employeesTable">
+                    <thead>
+                        <tr>
+                            <th>Employee Name</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Department</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model == null || !Model.Any())
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-5">No employees registered.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var user in Model)
+                            {
+                                <tr class="employee-row">
+                                    <td class="fw-semibold text-white">@user.FullName</td>
+                                    <td>@@@user.Username</td>
+                                    <td>@user.Email</td>
+                                    <td>
+                                        <span class="badge bg-secondary">@user.Role</span>
+                                    </td>
+                                    <td>@user.DepartmentName</td>
+                                    <td class="text-center">
+                                        <span class="badge @(user.IsActive ? "bg-success" : "bg-danger")" style="font-size: 0.75rem;">
+                                            @(user.IsActive ? "Active" : "Disabled")
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-secondary me-1" onclick="openEditUserModal('@user.Id')" data-bs-toggle="tooltip" title="Edit Profile">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </button>
+                                            
+                                            <!-- Disable Toggle for current logged user to prevent self-lockout -->
+                                            @if (User.Identity?.Name != user.Username)
+                                            {
+                                                <button class="btn btn-sm @(user.IsActive ? "btn-outline-danger" : "btn-outline-success")" onclick="toggleUserStatus('@user.Id', '@user.FullName', @(user.IsActive ? "true" : "false"))" data-bs-toggle="tooltip" title="@(user.IsActive ? "Deactivate Account" : "Activate Account")">
+                                                    <i class="bi @(user.IsActive ? "bi-lock-fill" : "bi-unlock-fill")"></i>
+                                                </button>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 2: Department Directory -->
+    <div class="tab-pane fade" id="departments-content" role="tabpanel" aria-labelledby="departments-tab">
+        <div class="glass-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h5 class="text-white fw-bold m-0">Corporate Departments</h5>
+                    <p class="text-muted small m-0">Manage divisions and view staff metrics</p>
+                </div>
+                
+                <button class="btn btn-primary" onclick="openCreateDeptModal()">
+                    <i class="bi bi-diagram-3-fill me-2"></i> Add Department
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="bms-table">
+                    <thead>
+                        <tr>
+                            <th>Department Name</th>
+                            <th>Description</th>
+                            <th class="text-center">Staff Count</th>
+                            <th>Created Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!departments.Any())
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-5">No departments registered.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var dept in departments)
+                            {
+                                <tr>
+                                    <td class="fw-semibold text-white">@dept.Name</td>
+                                    <td>@dept.Description</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-primary rounded-pill px-3 py-2 fw-semibold">
+                                            @dept.EmployeeCount members
+                                        </span>
+                                    </td>
+                                    <td>@dept.CreatedAt.ToString("dd MMM yyyy")</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Container Placeholder -->
+<div id="modalContainer"></div>
+
+@section Scripts {
+    <script>
+        const userModal = new BmsModalManager("userModalElement", "modalContainer");
+
+        // Client-side live search filter
+        document.getElementById("employeeSearch").addEventListener("input", (e) => {
+            const query = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll(".employee-row");
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(query) ? "" : "none";
+            });
+        });
+
+        // Trigger dynamic modal form load for user creation
+        function openCreateUserModal() {
+            userModal.open("/Users/Create", "Register New Employee Profile");
+        }
+
+        // Trigger dynamic modal form load for user update
+        function openEditUserModal(id) {
+            userModal.open(`/Users/Edit/${id}`, "Update Employee Details");
+        }
+
+        // Trigger department creation modal
+        function openCreateDeptModal() {
+            userModal.open("/Users/CreateDepartment", "Create Organizational Department");
+        }
+
+        // Submit form via AJAX
+        async function submitUserForm(event, form) {
+            event.preventDefault();
+
+            if (window.jQuery) {
+                const $form = window.jQuery(form);
+                if ($form.data("validator") && !$form.valid()) {
+                    return;
+                }
+            }
+
+            const formData = new FormData(form);
+            const submitBtn = form.querySelector('button[type="submit"]');
+            
+            if (submitBtn) submitBtn.disabled = true;
+
+            try {
+                const result = await bmsAjax(form.action, form.method, formData);
+                if (result.success) {
+                    bmsAlert(result.message, "success");
+                    userModal.close();
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    bmsAlert(result.message, "danger");
+                }
+            } catch (error) {
+                console.error("User form submit error:", error);
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
+            }
+        }
+
+        // Account status toggle orchestrator
+        async function toggleUserStatus(id, name, isActive) {
+            const action = isActive ? "deactivate" : "activate";
+            if (!confirm(`Are you sure you want to ${action} the employee account for '${name}'?`)) {
+                return;
+            }
+
+            try {
+                const result = await bmsAjax(`/Users/ToggleStatus/${id}`, "POST");
+                if (result.success) {
+                    bmsAlert(result.message, "success");
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    bmsAlert(result.message, "danger");
+                }
+            } catch (error) {
+                console.error("Toggle status error:", error);
+            }
+        }
+    </script>
+}

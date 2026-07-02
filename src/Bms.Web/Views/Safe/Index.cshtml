@@ -1,0 +1,273 @@
+@model IEnumerable<Bms.Application.DTOs.SafeTransactionDto>
+@using Bms.Domain.Enums
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "خزينة المعاملات المالية";
+    var partners = ViewBag.Partners as IEnumerable<Bms.Application.DTOs.PartnerQuotaMetric> ?? new List<Bms.Application.DTOs.PartnerQuotaMetric>();
+}
+
+<!-- Multi-Currency Reserves Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="glass-card p-4 d-flex align-items-center gap-3 border-start border-primary border-4">
+            <div class="rounded-circle d-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary" style="width: 60px; height: 60px;">
+                <i class="bi bi-wallet2 fs-3"></i>
+            </div>
+            <div>
+                <small class="text-secondary d-block fw-semibold text-uppercase">رصيد الخزينة بالجنيه المصري</small>
+                <h2 class="text-white fw-bold m-0 mt-1">@(((decimal)ViewBag.BalanceEgp).ToString("N2")) <span class="fs-6 text-muted">ج.م</span></h2>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="glass-card p-4 d-flex align-items-center gap-3 border-start border-success border-4">
+            <div class="rounded-circle d-flex align-items-center justify-content-center bg-success bg-opacity-10 text-success" style="width: 60px; height: 60px;">
+                <i class="bi bi-cash-stack fs-3"></i>
+            </div>
+            <div>
+                <small class="text-secondary d-block fw-semibold text-uppercase">رصيد الخزينة بالريال السعودي</small>
+                <h2 class="text-white fw-bold m-0 mt-1">@(((decimal)ViewBag.BalanceSar).ToString("N2")) <span class="fs-6 text-muted">ر.س</span></h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="glass-card p-4">
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+        <div>
+            <h5 class="text-white fw-bold m-0">دفتر الخزينة والمعاملات المالية</h5>
+            <p class="text-muted small m-0">مراجعة وتدقيق حركات رأس المال، تحصيلات حجوزات المسافرين، ومصروفات شراء تأشيرات البوابة</p>
+        </div>
+        
+        <div class="d-flex align-items-center gap-2">
+            <div class="input-group" style="width: 250px;">
+                <span class="input-group-text bg-transparent border-end-0" style="border-color: var(--border-color); color: var(--text-secondary);">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text" id="safeSearch" class="form-control border-start-0 text-white" placeholder="ابحث في دفتر النقدية..." autocomplete="off" />
+            </div>
+            
+            <button class="btn btn-primary" onclick="openCreateTransactionModal()">
+                <i class="bi bi-plus-circle-fill me-2"></i> تسجيل حركة نقدية
+            </button>
+        </div>
+    </div>
+
+    <!-- Transactions List -->
+    <div class="table-responsive">
+        <table class="bms-table" id="safeTable">
+            <thead>
+                <tr>
+                    <th>تاريخ المعاملة</th>
+                    <th>البيان / الوصف</th>
+                    <th>نوع الحركة</th>
+                    <th>التبعية (شيت)</th>
+                    <th>القيمة</th>
+                    <th>المعادل بالجنيه المصري</th>
+                    <th>مستلم النقدية</th>
+                    <th>طريقة الدفع / البنك</th>
+                    <th class="text-end">العمليات</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model == null || !Model.Any())
+                {
+                    <tr>
+                        <td colspan="9" class="text-center text-muted py-5">لا توجد حركات مالية مسجلة في الخزينة حالياً.</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var t in Model)
+                    {
+                        var isDeposit = t.TransactionType == "Deposit";
+                        var typeColor = isDeposit ? "text-success" : "text-danger";
+                        var typeSign = isDeposit ? "+" : "-";
+                        var egpValue = t.Currency == "EGP" ? t.Amount : t.Amount * t.ExchangeRate;
+                        
+                        <tr class="safe-row">
+                            <td>@t.TransactionDate.ToString("dd MMM yyyy")</td>
+                            <td class="fw-semibold text-white" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">@t.Description</td>
+                            <td>
+                                <span class="badge @(isDeposit ? "bg-success bg-opacity-15 text-success" : "bg-danger bg-opacity-15 text-danger")">
+                                    @(isDeposit ? "إيداع (وارد)" : "سحب (صادر)")
+                                </span>
+                            </td>
+                            <td>@(t.AssociatedPartnerName == "Corporate / Treasury" ? "الخزينة العامة" : "شيت: " + t.AssociatedPartnerName)</td>
+                            <td class="fw-bold @typeColor" dir="ltr">
+                                @typeSign @t.Amount.ToString("N2") <span class="text-muted small">@t.Currency</span>
+                            </td>
+                            <td class="text-white">
+                                @if (t.Currency != "EGP")
+                                {
+                                    <span>@egpValue.ToString("N2") ج.م <small class="text-muted">(صرف: @t.ExchangeRate)</small></span>
+                                }
+                                else
+                                {
+                                    <span>-</span>
+                                }
+                            </td>
+                            <td>@t.DepositorOrWithdrawerName</td>
+                            <td>@(string.IsNullOrEmpty(t.BankName) ? "درج النقدية" : t.BankName)</td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteTransaction('@t.Id')" data-bs-toggle="tooltip" title="حذف القيد">
+                                    <i class="bi bi-trash-fill"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Dialog Container for Cash Log -->
+<div class="modal fade" id="safeModalElement" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-white fw-bold">تسجيل حركة خزينة جديدة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: invert(1);"></button>
+            </div>
+            <form asp-controller="Safe" asp-action="Create" method="post" onsubmit="submitSafeForm(event, this)">
+                @Html.AntiForgeryToken()
+                <div class="modal-body p-4">
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">نوع المعاملة *</label>
+                            <select name="TransactionType" class="form-select" required>
+                                <option value="Deposit">إيداع (وارد للخزينة)</option>
+                                <option value="Withdrawal">سحب (صادر من الخزينة)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">العملة *</label>
+                            <select name="Currency" id="currencySelect" class="form-select" onchange="adjustExchangeRateInput(this.value)" required>
+                                <option value="EGP">الجنيه المصري (EGP)</option>
+                                <option value="SAR">الريال السعودي (SAR)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">المبلغ / القيمة *</label>
+                            <input type="number" name="Amount" step="0.01" class="form-control" required placeholder="0.00" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">سعر الصرف للجنيه *</label>
+                            <input type="number" name="ExchangeRate" id="exchangeRateInput" step="0.0001" class="form-control" value="1.0" readonly required />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الشريك التابع (التبعية لشيت)</label>
+                        <select name="AssociatedPartnerId" class="form-select">
+                            <option value="">خزينة الشركة العامة</option>
+                            @foreach (var pt in partners)
+                            {
+                                <option value="@pt.PartnerId">شيت الشريك: @pt.PartnerName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">اسم مستلم / مودع النقدية *</label>
+                        <input type="text" name="DepositorOrWithdrawerName" class="form-control" required placeholder="الاسم ثلاثي" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">اسم البنك (اتركه فارغاً في حال نقدية الدرج)</label>
+                        <input type="text" name="BankName" class="form-control" placeholder="مثال: البنك الأهلي، بنك مصر" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">البيان وسبب الحركة *</label>
+                        <textarea name="Description" class="form-control" rows="2" required placeholder="مثال: دفعة من حساب العمرة، شراء نقدية..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-2"></i> حفظ وقيد المعاملة
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Client-side search
+        document.getElementById("safeSearch").addEventListener("input", (e) => {
+            const query = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll(".safe-row");
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(query) ? "" : "none";
+            });
+        });
+
+        // Open Modal
+        function openCreateTransactionModal() {
+            const modalEl = document.getElementById("safeModalElement");
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+        }
+
+        // Adjust rate read-only status based on currency selection
+        function adjustExchangeRateInput(val) {
+            const rateInput = document.getElementById("exchangeRateInput");
+            if (val === "SAR") {
+                rateInput.value = "13.0000";
+                rateInput.readOnly = false;
+            } else {
+                rateInput.value = "1.0000";
+                rateInput.readOnly = true;
+            }
+        }
+
+        // Submit form via AJAX
+        async function submitSafeForm(event, form) {
+            event.preventDefault();
+            const formData = new FormData(form);
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
+
+            try {
+                const result = await bmsAjax(form.action, form.method, formData);
+                if (result.success) {
+                    bmsAlert(result.message, "success");
+                    const modalEl = document.getElementById("safeModalElement");
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    modal.hide();
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    bmsAlert(result.message, "danger");
+                    submitBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error("Safe form submit error:", error);
+                submitBtn.disabled = false;
+            }
+        }
+
+        // AJAX Deletion
+        async function deleteTransaction(id) {
+            if (!confirm("هل أنت متأكد من حذف قيد هذه الحركة من الخزينة؟")) {
+                return;
+            }
+
+            try {
+                const result = await bmsAjax(`/Safe/Delete/${id}`, "POST");
+                if (result.success) {
+                    bmsAlert(result.message, "success");
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    bmsAlert(result.message, "danger");
+                }
+            } catch (error) {
+                console.error("Safe deletion error:", error);
+            }
+        }
+    </script>
+}
