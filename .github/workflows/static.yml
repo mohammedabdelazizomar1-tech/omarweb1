@@ -1,0 +1,57 @@
+# Workflow for building and deploying a Blazor WebAssembly project to GitHub Pages
+name: Deploy Blazor WASM to Pages
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 1. إعداد بيئة الدوت نت (يمكنك تغيير الإصدار 8.0 حسب إصدار مشروعك)
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.301' 
+
+      # 2. عمل Publish للمشروع واستخراج الملفات النهائية في مجلد اسمه release
+      - name: Publish .NET Project
+        run: dotnet publish -c Release -o release
+
+      # 3. تعديل مسار الموقع ليتناسب مع اسم المستودع (omarweb1)
+      - name: Change base-tag in index.html
+        run: sed -i 's/<base href="\/" \/>/<base href="\/omarweb1\/" \/>/g' release/wwwroot/index.html
+
+      # 4. إضافة ملف .nojekyll لمنع جيتهاب من تجاهل ملفات الدوت نت المخفية
+      - name: Add .nojekyll file
+        run: touch release/wwwroot/.nojekyll
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      # 5. رفع المجلد النهائي (wwwroot) فقط بدلاً من المستودع بالكامل
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'release/wwwroot'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
