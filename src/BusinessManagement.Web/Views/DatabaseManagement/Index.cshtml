@@ -1,0 +1,179 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "إدارة قاعدة البيانات";
+}
+
+<div class="container-fluid py-4 text-right">
+    <!-- Success/Error Notifications -->
+    @if (ViewBag.SuccessMessage != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show border-0 shadow-lg mb-4 text-white" role="alert" style="background: rgba(16, 185, 129, 0.2); backdrop-filter: blur(10px);">
+            <i class="bi bi-check-circle-fill me-2"></i> @ViewBag.SuccessMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" style="filter: invert(1);"></button>
+        </div>
+    }
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show border-0 shadow-lg mb-4 text-white" role="alert" style="background: rgba(239, 68, 68, 0.2); backdrop-filter: blur(10px);">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> @ViewBag.ErrorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" style="filter: invert(1);"></button>
+        </div>
+    }
+
+    <div class="row g-4">
+        <!-- Database Counters Stats -->
+        <div class="col-lg-12">
+            <div class="glass-card p-4">
+                <h5 class="text-white fw-bold mb-3"><i class="bi bi-bar-chart-fill text-primary me-2"></i> إحصائيات قاعدة البيانات الحالية</h5>
+                <div class="row g-3">
+                    <div class="col-6 col-md-4 col-lg-2">
+                        <div class="p-3 rounded text-center" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);">
+                            <small class="text-secondary d-block">الملفات والحجوزات</small>
+                            <h3 class="text-white fw-bold m-0 mt-1">@ViewBag.BookingsCount</h3>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-2">
+                        <div class="p-3 rounded text-center" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);">
+                            <small class="text-secondary d-block">المسافرين المقيدين</small>
+                            <h3 class="text-white fw-bold m-0 mt-1">@ViewBag.PassengersCount</h3>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-2">
+                        <div class="p-3 rounded text-center" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);">
+                            <small class="text-secondary d-block">التأشيرات الخارجية</small>
+                            <h3 class="text-white fw-bold m-0 mt-1">@ViewBag.VisasCount</h3>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-2">
+                        <div class="p-3 rounded text-center" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);">
+                            <small class="text-secondary d-block">حركات الخزينة</small>
+                            <h3 class="text-white fw-bold m-0 mt-1">@ViewBag.SafeTransactionsCount</h3>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-2">
+                        <div class="p-3 rounded text-center" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);">
+                            <small class="text-secondary d-block">القيود والمحاسبة</small>
+                            <h3 class="text-white fw-bold m-0 mt-1">@ViewBag.JournalEntriesCount</h3>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-2">
+                        <div class="p-3 rounded text-center" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);">
+                            <small class="text-secondary d-block">سجلات رأس المال</small>
+                            <h3 class="text-white fw-bold m-0 mt-1">@ViewBag.CapitalCount</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 1: Excel Importer -->
+        <div class="col-lg-6">
+            <div class="glass-card p-4 h-100 d-flex flex-column justify-content-between">
+                <div>
+                    <h5 class="text-white fw-bold mb-2"><i class="bi bi-file-earmark-spreadsheet-fill text-success me-2"></i> استيراد ملف العمل الشامل (Excel)</h5>
+                    <p class="text-muted small">
+                        قم برفع ملف العمل الخاص بك `xlsx.xlsx`. سيقوم النظام تلقائياً بفك جداول (الضمان، درفت، تاشيرات خارجي، Khz) وتسكين المساهمات والحجوزات وحركات الخزينة في خطوة واحدة.
+                    </p>
+                    <div class="alert alert-info border-0 text-white small mt-3" style="background: rgba(59, 130, 246, 0.1);">
+                        <i class="bi bi-info-circle me-1"></i> يرجى التأكد من توافق الشيتات وأسماء الأعمدة مع الهيكل الأصلي لملف الشركة.
+                    </div>
+                </div>
+                
+                <form asp-controller="DatabaseManagement" asp-action="ImportBusinessExcel" method="post" enctype="multipart/form-data" class="mt-4">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label text-white">اختر ملف Excel (.xlsx) *</label>
+                        <input type="file" name="file" class="form-control" accept=".xlsx" required />
+                    </div>
+                    <button type="submit" class="btn btn-success w-100 py-2 fw-semibold">
+                        <i class="bi bi-cloud-arrow-up-fill me-2"></i> معالجة ورفع ملف البيانات بالكامل
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Section 2: Clear Data Control Console -->
+        <div class="col-lg-6">
+            <div class="glass-card p-4 h-100">
+                <h5 class="text-white fw-bold mb-3"><i class="bi bi-trash3-fill text-danger me-2"></i> لوحة تصفية ومسح البيانات التشغيلية</h5>
+                <p class="text-muted small">
+                    من خلال هذه اللوحة، يمكنك مسح بيانات معينة أو تصفية قاعدة البيانات بشكل كامل لإعادة تهيئة النظام. العمليات أدناه لا يمكن التراجع عنها وتتطلب تأكيداً.
+                </p>
+
+                <div class="d-flex flex-column gap-3 mt-4">
+                    <!-- Option 1: Clear Bookings -->
+                    <div class="p-3 rounded border border-danger border-opacity-10 d-flex align-items-center justify-content-between" style="background: rgba(255,255,255,0.01);">
+                        <div>
+                            <span class="text-white fw-bold d-block">مسح الحجوزات فقط</span>
+                            <small class="text-muted">حذف ملفات حجوزات درفت وتكاليفها ودفعاتهم.</small>
+                        </div>
+                        <form asp-controller="DatabaseManagement" asp-action="ClearBookings" method="post" onsubmit="confirmDeleteAction(event, 'هل أنت متأكد من رغبتك في حذف كافة حجوزات المسافرين وتكاليفها ودفعاتها نهائياً؟')">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-outline-danger btn-sm px-3">مسح الحجوزات</button>
+                        </form>
+                    </div>
+
+                    <!-- Option 2: Clear Passengers -->
+                    <div class="p-3 rounded border border-danger border-opacity-10 d-flex align-items-center justify-content-between" style="background: rgba(255,255,255,0.01);">
+                        <div>
+                            <span class="text-white fw-bold d-block">مسح المسافرين فقط</span>
+                            <small class="text-muted">حذف كافة المسافرين المسجلين وملاحظاتهم (يتطلب عدم وجود حجوزات مرتبطة).</small>
+                        </div>
+                        <form asp-controller="DatabaseManagement" asp-action="ClearPassengers" method="post" onsubmit="confirmDeleteAction(event, 'هل أنت متأكد من رغبتك في حذف كافة المسافرين وملاحظاتهم نهائياً؟')">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-outline-danger btn-sm px-3">مسح المسافرين</button>
+                        </form>
+                    </div>
+
+                    <!-- Option 3: Clear Financials and Cash ledger -->
+                    <div class="p-3 rounded border border-danger border-opacity-10 d-flex align-items-center justify-content-between" style="background: rgba(255,255,255,0.01);">
+                        <div>
+                            <span class="text-white fw-bold d-block">مسح الحسابات والقيود والخزينة</span>
+                            <small class="text-muted">حذف حركات الخزينة (Safe Transactions)، القيود اليومية، المصروفات والواردات.</small>
+                        </div>
+                        <form asp-controller="DatabaseManagement" asp-action="ClearFinancials" method="post" onsubmit="confirmDeleteAction(event, 'هل أنت متأكد من رغبتك في مسح كافة الحسابات، حركات الخزينة، والقيود المحاسبية نهائياً؟')">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-outline-danger btn-sm px-3">مسح المالية</button>
+                        </form>
+                    </div>
+
+                    <!-- Option 3: Reset Everything to zero -->
+                    <div class="p-3 rounded border border-danger border-opacity-20 d-flex align-items-center justify-content-between" style="background: rgba(239, 68, 68, 0.03);">
+                        <div>
+                            <span class="text-danger fw-bold d-block"><i class="bi bi-shield-slash-fill me-1"></i> مسح وتصفية كافة البيانات بالكامل</span>
+                            <small class="text-muted">إرجاع النظام للحالة الصفرية التامة (حذف الحجوزات والمسافرين والمالية والشركاء مع الحفاظ على الموظفين والإعدادات الافتراضية).</small>
+                        </div>
+                        <form asp-controller="DatabaseManagement" asp-action="ClearAllData" method="post" onsubmit="confirmDeleteAction(event, '🚨 تحذير حرج! هل أنت متأكد من حذف كافة البيانات بالكامل في النظام؟ لن تتمكن من التراجع عن هذه الخطوة!')">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-danger btn-sm px-4">تصفية شاملة</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script nonce="@Context.Items["ScriptNonce"]">
+        function confirmDeleteAction(event, text) {
+            event.preventDefault();
+            const form = event.target;
+            
+            Swal.fire({
+                title: 'هل أنت متأكد؟',
+                text: text,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'نعم، قم بالحذف!',
+                cancelButtonText: 'إلغاء العمل'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        }
+    </script>
+}

@@ -1,0 +1,244 @@
+@model BusinessManagement.Application.DTOs.CreateBookingDto
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "تعديل تفاصيل الحجز";
+    var passengers = ViewBag.Passengers as IEnumerable<BusinessManagement.Application.DTOs.PassengerDto> ?? new List<BusinessManagement.Application.DTOs.PassengerDto>();
+    var partners = ViewBag.Partners as IEnumerable<BusinessManagement.Application.DTOs.PartnerQuotaMetric> ?? new List<BusinessManagement.Application.DTOs.PartnerQuotaMetric>();
+}
+
+<div class="glass-card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary pb-3">
+        <div>
+            <h5 class="text-white fw-bold m-0">تعديل تفاصيل ملف الحجز</h5>
+            <p class="text-muted small m-0">تحديث تذاكر الطيران، تكلفة الفندق، أو حصص كوتة البوابة للمسافر</p>
+        </div>
+        <a href="/Bookings" class="btn btn-outline-secondary"><i class="bi bi-arrow-right me-2"></i> العودة للدفتر</a>
+    </div>
+
+    <form asp-action="Edit" method="post" onsubmit="submitBookingForm(event, this)">
+        @Html.AntiForgeryToken()
+        
+        <div class="row g-3 mb-4">
+            <!-- Passenger Profile Dropdown -->
+            <div class="col-md-5">
+                <label asp-for="PassengerId" class="form-label">ملف المسافر *</label>
+                <select asp-for="PassengerId" class="form-select" id="passengerSelect" required>
+                    @foreach (var p in passengers)
+                    {
+                        <option value="@p.Id" data-partner-id="@p.PartnerId">@p.FullName (@p.PassportNumber)</option>
+                    }
+                </select>
+                <span asp-validation-for="PassengerId" class="text-danger small"></span>
+            </div>
+
+            <!-- Partner Attribution (Admin-only selector) -->
+            @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+            {
+                <div class="col-md-4">
+                    <label asp-for="PartnerId" class="form-label">التبعية لشيت الشريك *</label>
+                    <select asp-for="PartnerId" class="form-select" required>
+                        @foreach (var pt in partners)
+                        {
+                            <option value="@pt.PartnerId">شيت الشريك: @pt.PartnerName</option>
+                        }
+                    </select>
+                    <span asp-validation-for="PartnerId" class="text-danger small"></span>
+                </div>
+            }
+            else
+            {
+                <input type="hidden" asp-for="PartnerId" />
+            }
+
+            <!-- Travel Date -->
+            <div class="col-md-3">
+                <label asp-for="TravelDate" class="form-label">تاريخ السفر / المغادرة *</label>
+                <input asp-for="TravelDate" type="date" class="form-control" value="@Model.TravelDate.ToString("yyyy-MM-dd")" required />
+                <span asp-validation-for="TravelDate" class="text-danger small"></span>
+            </div>
+        </div>
+
+        <h5 class="text-white fw-bold mb-3 border-bottom border-secondary pb-2">تفصيل تكلفة وسعر البرنامج</h5>
+        
+        <!-- Numerical Spreadsheet Calculator -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3 col-sm-6">
+                <label asp-for="NetCost" class="form-label">نت (المنصة) (ج.م)</label>
+                <input asp-for="NetCost" type="number" step="0.01" class="form-control calc-trigger" />
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <label asp-for="BarcodeCost" class="form-label">الباركود (ج.م)</label>
+                <input asp-for="BarcodeCost" type="number" step="0.01" class="form-control calc-trigger" />
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <label asp-for="CompanyCost" class="form-label">الشركة (ج.م)</label>
+                <input asp-for="CompanyCost" type="number" step="0.01" class="form-control calc-trigger" />
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <label asp-for="AirportCost" class="form-label">المطار (ج.م)</label>
+                <input asp-for="AirportCost" type="number" step="0.01" class="form-control calc-trigger" />
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <label asp-for="ProgramCost" class="form-label">البرنامج / السكن (ج.م)</label>
+                <input asp-for="ProgramCost" type="number" step="0.01" class="form-control calc-trigger" />
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <label asp-for="TicketCost" class="form-label">تذكرة الطيران (ج.م)</label>
+                <input asp-for="TicketCost" type="number" step="0.01" class="form-control calc-trigger" />
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <label asp-for="BusCost" class="form-label">الباص / الانتقالات (ج.م)</label>
+                <input asp-for="BusCost" type="number" step="0.01" class="form-control calc-trigger" />
+            </div>
+            
+            <!-- Has QR code Checkbox -->
+            <div class="col-md-3 col-sm-6 d-flex align-items-center mt-auto" style="height: 38px;">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" asp-for="HasQrCode" id="hasQrCode" />
+                    <label class="form-check-label text-white" for="hasQrCode">حجز كود بوابة (QR)</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Real-Time Calculation HUD -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="p-3 rounded text-center" style="background-color: rgba(255, 255, 255, 0.01); border: 1px solid var(--border-color);">
+                    <small class="text-secondary d-block">إجمالي تكلفة البرنامج</small>
+                    <h3 class="text-white fw-bold m-0 mt-1" id="hudTotalCost">0.00 ج.م</h3>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 rounded text-center" style="background-color: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2);">
+                    <label asp-for="SellingPrice" class="form-label small text-secondary d-block m-0">سعر البيع للمسافر (ج.م) *</label>
+                    <input asp-for="SellingPrice" type="number" step="0.01" class="form-control text-center text-info fw-bold bg-transparent border-0 fs-4 py-0" style="outline: none; box-shadow: none;" required />
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 rounded text-center" style="background-color: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2);">
+                    <small class="text-secondary d-block">صافي الأرباح المحسوبة</small>
+                    <h3 class="text-success fw-bold m-0 mt-1" id="hudNetProfit">0.00 ج.م</h3>
+                </div>
+            </div>
+        </div>
+
+        <h5 class="text-white fw-bold mb-3 border-bottom border-secondary pb-2">ملاحظات إضافية</h5>
+        <div class="row g-3 mb-4">
+            <div class="col-12">
+                <label asp-for="Notes" class="form-label">ملاحظات الحجز الداخلية</label>
+                <input asp-for="Notes" class="form-control" />
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 border-top border-secondary pt-3">
+            <a href="/Bookings" class="btn btn-outline-secondary px-4 py-2">إلغاء</a>
+            <button type="submit" class="btn btn-primary px-5 py-2">
+                <i class="bi bi-save me-2"></i> حفظ التعديلات
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        function calculateSpreadsheetSums() {
+            const net = parseFloat(document.getElementById("NetCost").value) || 0;
+            const barcode = parseFloat(document.getElementById("BarcodeCost").value) || 0;
+            const company = parseFloat(document.getElementById("CompanyCost").value) || 0;
+            const airport = parseFloat(document.getElementById("AirportCost").value) || 0;
+            const program = parseFloat(document.getElementById("ProgramCost").value) || 0;
+            const ticket = parseFloat(document.getElementById("TicketCost").value) || 0;
+            const bus = parseFloat(document.getElementById("BusCost").value) || 0;
+
+            const sellingPrice = parseFloat(document.getElementById("SellingPrice").value) || 0;
+
+            const totalCost = net + barcode + company + airport + program + ticket + bus;
+            const netProfit = sellingPrice - totalCost;
+
+            document.getElementById("hudTotalCost").textContent = `${totalCost.toFixed(2)} ج.م`;
+            
+            const profitEl = document.getElementById("hudNetProfit");
+            profitEl.textContent = `${netProfit.toFixed(2)} ج.م`;
+            if (netProfit < 0) {
+                profitEl.className = "text-danger fw-bold m-0 mt-1";
+            } else {
+                profitEl.className = "text-success fw-bold m-0 mt-1";
+            }
+        }
+
+        document.querySelectorAll(".calc-trigger, #SellingPrice").forEach(input => {
+            input.addEventListener("input", calculateSpreadsheetSums);
+        });
+
+        document.addEventListener("DOMContentLoaded", calculateSpreadsheetSums);
+
+        async function submitBookingForm(event, form) {
+            event.preventDefault();
+
+            if (window.jQuery) {
+                const $form = window.jQuery(form);
+                if ($form.data("validator") && !$form.valid()) {
+                    return;
+                }
+            }
+
+            const formData = new FormData(form);
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
+
+            try {
+                const result = await BusinessManagementAjax(form.action, form.method, formData);
+                if (result.success) {
+                    BusinessManagementAlert(result.message, "success");
+                    setTimeout(() => location.href = "/Bookings", 1200);
+                } else {
+                    BusinessManagementAlert(result.message, "danger");
+                    submitBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error("Booking form update error:", error);
+                submitBtn.disabled = false;
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const partnerSelect = document.getElementById("PartnerId");
+            const passengerSelect = document.getElementById("passengerSelect");
+
+            if (partnerSelect && passengerSelect) {
+                const allOptions = Array.from(passengerSelect.options);
+
+                function filterPassengers() {
+                    const selectedPartnerId = (partnerSelect.value || "").trim().toLowerCase();
+                    const currentValue = passengerSelect.value;
+
+                    passengerSelect.innerHTML = "";
+
+                    if (!selectedPartnerId) {
+                        const placeholderOpt = document.createElement("option");
+                        placeholderOpt.value = "";
+                        placeholderOpt.textContent = "اختر التبعية أولاً لعرض المسافرين...";
+                        passengerSelect.appendChild(placeholderOpt);
+                        return;
+                    }
+
+                    allOptions.forEach(opt => {
+                        const optPartnerId = (opt.getAttribute("data-partner-id") || "").trim().toLowerCase();
+                        if (optPartnerId === selectedPartnerId) {
+                            passengerSelect.appendChild(opt);
+                        }
+                    });
+
+                    if (Array.from(passengerSelect.options).some(o => o.value === currentValue)) {
+                        passengerSelect.value = currentValue;
+                    } else if (passengerSelect.options.length > 0) {
+                        passengerSelect.selectedIndex = 0;
+                    }
+                }
+
+                partnerSelect.addEventListener("change", filterPassengers);
+                filterPassengers();
+            }
+        });
+    </script>
+}

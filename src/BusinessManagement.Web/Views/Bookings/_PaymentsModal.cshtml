@@ -1,0 +1,136 @@
+@model IEnumerable<BusinessManagement.Application.DTOs.BookingPaymentDto>
+@{
+    var booking = ViewBag.Booking as BusinessManagement.Application.DTOs.BookingDto;
+}
+
+<div class="modal-content glass-card border-0">
+    <div class="modal-header border-bottom border-secondary">
+        <h5 class="modal-title text-white fw-bold">
+            <i class="bi bi-wallet2 text-success me-2"></i> إدارة دفعات الحجز والتسديد
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: invert(1);"></button>
+    </div>
+    <div class="modal-body">
+        @if (booking != null)
+        {
+            <input type="hidden" id="modalBookingId" value="@booking.Id" />
+            <!-- Booking Summary card -->
+            <div class="p-3 rounded mb-4 text-center" style="background-color: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color);">
+                <div class="row">
+                    <div class="col-md-3 col-6 border-end border-secondary">
+                        <small class="text-secondary d-block">رقم الملف</small>
+                        <span class="text-white fw-bold">@booking.BookingNumber</span>
+                    </div>
+                    <div class="col-md-3 col-6 border-end border-secondary">
+                        <small class="text-secondary d-block">سعر بيع البرنامج</small>
+                        <span class="text-info fw-bold">@booking.SellingPrice.ToString("N2") ج.م</span>
+                    </div>
+                    <div class="col-md-3 col-6 border-end border-secondary">
+                        <small class="text-secondary d-block">إجمالي المبالغ المحصلة</small>
+                        <span class="text-success fw-bold" id="modalTotalPaid">@booking.PaymentsCollected.ToString("N2") ج.م</span>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <small class="text-secondary d-block">الرصيد المتبقي</small>
+                        <span class="text-warning fw-bold" id="modalRemaining">@booking.RemainingBalance.ToString("N2") ج.م</span>
+                    </div>
+                </div>
+            </div>
+
+            @if (booking.RemainingBalance <= 0)
+            {
+                <!-- Fully Paid Alert Banner -->
+                <div class="alert alert-success d-flex align-items-center gap-2 mb-4 py-3" style="background-color: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: var(--success);" role="alert">
+                    <i class="bi bi-check-circle-fill fs-4"></i>
+                    <div>
+                        <strong class="fs-5 d-block mb-1">تم الدفع بالكامل!</strong>
+                        <span>تم تسوية حساب هذا الملف وسداده بالكامل. لا يمكن تسجيل دفعات جديدة إلا في حال تعديل أو إلغاء الدفعات السابقة.</span>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <!-- Add Payment Form -->
+                <form id="addPaymentForm" onsubmit="submitPayment(event)" class="mb-4">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="bookingId" value="@booking.Id" />
+                    <h6 class="text-white fw-semibold mb-3">تسجيل دفعة نقدية جديدة</h6>
+                    <div class="row g-2">
+                        <div class="col-md-3">
+                            <input type="number" name="amount" step="0.01" class="form-control" placeholder="المبلغ (ج.م) *" required />
+                        </div>
+                        <div class="col-md-3">
+                            <select name="paymentMethod" id="paymentMethodSelect" class="form-select" required onchange="toggleAccountField(this.value)">
+                                <option value="Cash">نقداً / خزينة</option>
+                                <option value="BankTransfer">تحويل بنكي</option>
+                                <option value="VodafoneCash">محفظة الكترونية</option>
+                                <option value="InstaPay">إنستا باي (InstaPay)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="text" name="receiptNumber" class="form-control" placeholder="رقم الإيصال / المرجع" />
+                        </div>
+                        <div class="col-md-3">
+                            <input type="date" name="paymentDate" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                        </div>
+                    </div>
+                    <!-- Account / Wallet details (shown dynamically) -->
+                    <div class="row g-2 mt-2" id="accountFieldWrapper" style="display: none;">
+                        <div class="col-12">
+                            <input type="text" name="accountDetail" id="accountDetailInput" class="form-control" placeholder="رقم الحساب البنكي أو المحفظة أو عنوان InstaPay..." />
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end mt-3">
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-plus-circle me-1"></i> تسجيل وإيداع بالخزينة
+                        </button>
+                    </div>
+                </form>
+            }
+        }
+
+        <!-- Payments Log List -->
+        <h6 class="text-white fw-semibold mb-3">سجل الدفعات المقيدة للملف</h6>
+        <div class="table-responsive">
+            <table class="BusinessManagement-table">
+                <thead>
+                    <tr>
+                        <th>كود الحركة (ID)</th>
+                        <th>التاريخ</th>
+                        <th class="text-end">المبلغ</th>
+                        <th>طريقة الدفع</th>
+                        <th>رقم الإيصال / المرجع</th>
+                        <th class="text-end">العمليات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model == null || !Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-3">لم يتم تسجيل أي دفعات لهذا الملف بعد.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var p in Model)
+                        {
+                            <tr>
+                                <td class="font-monospace text-secondary" style="font-size: 0.8rem;">@(string.IsNullOrEmpty(p.TransactionId) ? "-" : p.TransactionId)</td>
+                                <td>@p.PaymentDate.ToString("dd MMM yyyy")</td>
+                                <td class="text-end fw-semibold text-success">@p.Amount.ToString("N2") ج.م</td>
+                                <td>
+                                    <span class="badge-status delivered">@p.PaymentMethod</span>
+                                </td>
+                                <td>@(string.IsNullOrEmpty(p.ReceiptNumber) ? "-" : p.ReceiptNumber)</td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deletePayment('@p.Id')">
+                                        <i class="bi bi-trash-fill"></i> حذف
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

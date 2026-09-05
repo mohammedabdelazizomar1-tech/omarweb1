@@ -1,0 +1,1223 @@
+@model IEnumerable<BusinessManagement.Application.DTOs.SafeTransactionDto>
+@using BusinessManagement.Domain.Enums
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "خزينة المعاملات المالية";
+    var partners = ViewBag.Partners as IEnumerable<BusinessManagement.Application.DTOs.PartnerQuotaMetric> ?? new List<BusinessManagement.Application.DTOs.PartnerQuotaMetric>();
+}
+
+<style>
+    #groupPassengersList, #individualPassengersList {
+        max-height: 380px;
+        overflow-y: auto;
+        padding-right: 5px;
+    }
+    #groupPassengersList::-webkit-scrollbar,
+    #individualPassengersList::-webkit-scrollbar {
+        width: 6px;
+    }
+    #groupPassengersList::-webkit-scrollbar-track,
+    #individualPassengersList::-webkit-scrollbar-track {
+        background: rgba(0,0,0,0.05);
+        border-radius: 4px;
+    }
+    #groupPassengersList::-webkit-scrollbar-thumb,
+    #individualPassengersList::-webkit-scrollbar-thumb {
+        background: rgba(0,0,0,0.2);
+        border-radius: 4px;
+    }
+    #groupPassengersList::-webkit-scrollbar-thumb:hover,
+    #individualPassengersList::-webkit-scrollbar-thumb:hover {
+        background: rgba(0,0,0,0.3);
+    }
+    .group-card-border {
+        border: 2px solid rgba(0, 0, 0, 0.15) !important;
+        border-radius: 8px !important;
+        padding: 15px !important;
+        margin-bottom: 15px !important;
+        background-color: #ffffff !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important;
+    }
+</style>
+
+<!-- Multi-Currency Reserves Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="glass-card p-4 d-flex align-items-center gap-3 border-start border-primary border-4">
+            <div class="rounded-circle d-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary" style="width: 60px; height: 60px;">
+                <i class="bi bi-wallet2 fs-3"></i>
+            </div>
+            <div>
+                <small class="text-secondary d-block fw-semibold text-uppercase">رصيد الخزينة بالجنيه المصري</small>
+                <h2 class="text-white fw-bold m-0 mt-1">@(((decimal)ViewBag.BalanceEgp).ToString("N2")) <span class="fs-6 text-muted">ج.م</span></h2>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="glass-card p-4 d-flex align-items-center gap-3 border-start border-success border-4">
+            <div class="rounded-circle d-flex align-items-center justify-content-center bg-success bg-opacity-10 text-success" style="width: 60px; height: 60px;">
+                <i class="bi bi-cash-stack fs-3"></i>
+            </div>
+            <div>
+                <small class="text-secondary d-block fw-semibold text-uppercase">رصيد الخزينة بالريال السعودي</small>
+                <h2 class="text-white fw-bold m-0 mt-1">@(((decimal)ViewBag.BalanceSar).ToString("N2")) <span class="fs-6 text-muted">ر.س</span></h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="glass-card p-4">
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+        <div>
+            <h5 class="text-white fw-bold m-0">دفتر الخزينة والمعاملات المالية</h5>
+            <p class="text-muted small m-0">مراجعة وتدقيق حركات رأس المال، تحصيلات حجوزات المسافرين، ومصروفات شراء تأشيرات البوابة</p>
+        </div>
+        
+        <div class="d-flex align-items-center gap-2 flex-wrap text-nowrap">
+            <!-- Search -->
+            <div class="input-group" style="width: 170px; flex-shrink: 0;">
+                <span class="input-group-text bg-transparent border-end-0" style="border-color: var(--border-color); color: var(--text-secondary);">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text" id="safeSearch" class="form-control border-start-0 text-white" placeholder="ابحث..." autocomplete="off" style="font-size: 0.85rem;" />
+            </div>
+
+            <!-- Date From -->
+            <div class="d-flex align-items-center gap-1" style="flex-shrink: 0;">
+                <small class="text-secondary" style="font-size: 0.8rem;">من:</small>
+                <input type="date" id="fromDateFilter" class="form-control" style="width: 130px; font-size: 0.85rem; border-color: var(--border-color); height: 38px;" />
+            </div>
+
+            <!-- Date To -->
+            <div class="d-flex align-items-center gap-1" style="flex-shrink: 0;">
+                <small class="text-secondary" style="font-size: 0.8rem;">إلى:</small>
+                <input type="date" id="toDateFilter" class="form-control" style="width: 130px; font-size: 0.85rem; border-color: var(--border-color); height: 38px;" />
+            </div>
+
+            <!-- Partner Filter -->
+            <select id="partnerFilter" class="form-select" style="width: 130px; font-size: 0.85rem; border-color: var(--border-color); height: 38px; flex-shrink: 0;">
+                <option value="">كل التبعيات</option>
+                <option value="الخزينة العامة">الخزينة العامة</option>
+                @foreach (var pName in Model.Where(x => x.AssociatedPartnerName != "Corporate / Treasury").Select(x => x.AssociatedPartnerName).Distinct())
+                {
+                    <option value="شيت: @pName">شيت: @pName</option>
+                }
+            </select>
+            
+            <button class="btn btn-outline-primary" onclick="printDisplayedSafeTransactions()" style="font-size: 0.85rem; height: 38px; display: inline-flex; align-items: center; white-space: nowrap; flex-shrink: 0;">
+                <i class="bi bi-printer me-1"></i> طباعة السندات جماعياً
+            </button>
+            
+            <button class="btn btn-primary" onclick="openCreateTransactionModal()" style="font-size: 0.85rem; height: 38px; display: inline-flex; align-items: center; white-space: nowrap; flex-shrink: 0;">
+                <i class="bi bi-plus-circle-fill me-2"></i> تسجيل حركة نقدية
+            </button>
+        </div>
+    </div>
+
+    <!-- Transactions List -->
+    <div class="table-responsive">
+        <table class="BusinessManagement-table" id="safeTable">
+            <thead>
+                <tr>
+                    <th>رقم الحركة (ID)</th>
+                    <th>تاريخ المعاملة</th>
+                    <th>البيان / الوصف</th>
+                    <th>نوع الحركة</th>
+                    <th>التبعية (شيت)</th>
+                    <th>القيمة</th>
+                    <th>المعادل بالجنيه المصري</th>
+                    <th>مستلم / مودع</th>
+                    <th>طريقة الدفع / البنك</th>
+                    <th class="text-end">العمليات</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model == null || !Model.Any())
+                {
+                    <tr>
+                        <td colspan="10" class="text-center text-muted py-5">لا توجد حركات مالية مسجلة في الخزينة حالياً.</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var t in Model)
+                    {
+                        var isDeposit = t.TransactionType == "Deposit";
+                        var typeColor = isDeposit ? "text-success" : "text-danger";
+                        var typeSign = isDeposit ? "+" : "-";
+                        var egpValue = t.Currency == "EGP" ? t.Amount : t.Amount * t.ExchangeRate;
+                        
+                        <tr class="safe-row" data-id="@t.Id" data-date="@t.TransactionDate.ToString("yyyy-MM-dd")" data-partner="@(t.AssociatedPartnerName == "Corporate / Treasury" ? "الخزينة العامة" : "شيت: " + t.AssociatedPartnerName)">
+                            <td class="font-monospace text-secondary" style="font-size: 0.8rem;">
+                                ST-@t.Id.ToString().Substring(0, 8).ToUpper()
+                            </td>
+                            <td>@t.TransactionDate.ToString("dd MMM yyyy")</td>
+                            <td class="fw-semibold text-white" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">@t.Description</td>
+                            <td>
+                                <span class="badge-status @(isDeposit ? "paid" : "unpaid")">
+                                    @(isDeposit ? "إيداع (وارد)" : "سحب (صادر)")
+                                </span>
+                            </td>
+                            <td>@(t.AssociatedPartnerName == "Corporate / Treasury" ? "الخزينة العامة" : "شيت: " + t.AssociatedPartnerName)</td>
+                            <td class="fw-bold @typeColor" dir="ltr">
+                                @typeSign @t.Amount.ToString("N2") <span class="text-muted small">@t.Currency</span>
+                            </td>
+                            <td class="text-white">
+                                @if (t.Currency != "EGP")
+                                {
+                                    <span>@egpValue.ToString("N2") ج.م <small class="text-muted">(صرف: @t.ExchangeRate)</small></span>
+                                }
+                                else
+                                {
+                                    <span>-</span>
+                                }
+                            </td>
+                            <td>@t.DepositorOrWithdrawerName</td>
+                            <td>@(string.IsNullOrEmpty(t.BankName) ? "درج النقدية" : t.BankName)</td>
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end align-items-center gap-1">
+                                    <a href="/Safe/Print/@t.Id" target="_blank" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="طباعة السند">
+                                        <i class="bi bi-printer-fill"></i>
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteTransaction('@t.Id')" data-bs-toggle="tooltip" title="حذف القيد">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Dialog Container for Cash Log -->
+<div class="modal fade" id="safeModalElement" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">تسجيل حركة خزينة جديدة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-controller="Safe" asp-action="Create" method="post" onsubmit="submitSafeForm(event, this)">
+                @Html.AntiForgeryToken()
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label">نوع المعاملة *</label>
+                        <select name="TransactionType" id="transactionTypeSelect" class="form-select" required onchange="onTransactionTypeChanged(this.value)">
+                            <option value="Deposit">إيداع (وارد للخزينة)</option>
+                            <option value="Withdrawal">سحب (صادر من الخزينة)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3 d-none" id="partnerWrapper">
+                        <label class="form-label">الشريك التابع (التبعية لشيت) *</label>
+                        <select name="AssociatedPartnerId" id="partnerSelect" class="form-select" onchange="onPartnerSelected(this.value)">
+                            <option value="">خزينة الشركة العامة</option>
+                            @foreach (var pt in partners)
+                            {
+                                <option value="@pt.PartnerId">شيت الشريك: @pt.PartnerName</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- العملة وسعر الصرف فوق قبل اختيار المجموعة -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">العملة *</label>
+                            <select name="Currency" id="currencySelect" class="form-select" onchange="adjustExchangeRateInput(this.value)" required>
+                                <option value="EGP">الجنيه المصري (EGP)</option>
+                                <option value="SAR">الريال السعودي (SAR)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">سعر الصرف للجنيه *</label>
+                            <input type="number" name="ExchangeRate" id="exchangeRateInput" step="0.0001" class="form-control" value="1.0" readonly required />
+                        </div>
+                    </div>
+
+                    <div class="mb-3 d-none" id="bookingWrapper">
+                        <div id="hiddenBookingIdsContainer"></div>
+
+                        <!-- 1. المبلغ الكلي للمجموعات والمسافرين الفرادى -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-primary">المبلغ الكلي للمجموعات والمسافرين الفرادى *</label>
+                            <input type="number" id="overallAmountInput" step="0.01" class="form-control fw-bold border-primary text-dark" placeholder="0.00" style="font-size: 1.1rem; background-color: rgba(13, 110, 253, 0.05);" oninput="distributeOverallAmount(this.value)" onchange="syncSectionTotalAmountInputs(); calculateTotalAmountFromRows();" />
+                        </div>
+
+                        <!-- 2. قسم المجموعات -->
+                        <div class="card mb-3 p-3 border border-secondary shadow-sm">
+                            <h6 class="text-primary fw-bold border-bottom pb-2 mb-2"><i class="bi bi-people-fill me-1"></i>اختيار المجموعة</h6>
+                            <div class="mb-3">
+                                <div class="dropdown w-100" id="groupsDropdown">
+                                    <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start d-flex justify-content-between align-items-center text-dark bg-white" type="button" id="groupDropdownBtn" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" style="border-color: rgba(0,0,0,0.12); height: 38px;">
+                                        <span id="selectedGroupsCountText" class="text-muted">اختر المجموعات... (0 محدد)</span>
+                                    </button>
+                                    <div class="dropdown-menu w-100 p-3 shadow-lg" aria-labelledby="groupDropdownBtn" style="max-height: 350px; overflow-y: auto;">
+                                        <input type="text" id="groupSearchInput" class="form-control mb-2" placeholder="ابحث برقم المجموعة..." autocomplete="off" oninput="filterGroupsList()" />
+                                        <div class="dropdown-divider"></div>
+                                        <div id="groupsListContainer" class="d-flex flex-column gap-2" style="max-height: 200px; overflow-y: auto;">
+                                            <!-- Dynamic group items will be rendered here -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- اسم المودع والمبلغ الكلي للمجموعة -->
+                            <div class="row g-2 mb-3 d-none" id="groupInputsRow">
+                                <div class="col-md-6">
+                                    <label class="form-label small text-secondary fw-semibold">اسم المودع</label>
+                                    <input type="text" name="GroupDepositorName" id="groupDepositorNameInput" class="form-control form-control-sm" placeholder="اسم مودع المجموعة" oninput="calculateTotalAmountFromRows()" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small text-secondary fw-semibold">المبلغ الكلي للمجموعة</label>
+                                    <input type="number" id="groupTotalAmountInput" step="0.01" class="form-control form-control-sm" placeholder="0.00" oninput="distributeGroupAmount(this.value)" onchange="syncSectionTotalAmountInputs(); calculateTotalAmountFromRows();" />
+                                </div>
+                            </div>
+
+                            <!-- تفاصيل دفعات المسافرين في المجموعات -->
+                            <div id="groupPassengersList" class="d-flex flex-column gap-2"></div>
+                        </div>
+
+                        <!-- 3. قسم المسافرين الفرادى -->
+                        <div class="card mb-3 p-3 border border-secondary shadow-sm">
+                            <h6 class="text-success fw-bold border-bottom pb-2 mb-2"><i class="bi bi-person-fill me-1"></i>اختيار المسافرين الفرادى</h6>
+                            <div class="mb-3">
+                                <div class="dropdown w-100" id="bookingsDropdown">
+                                    <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start d-flex justify-content-between align-items-center text-dark bg-white" type="button" id="bookingDropdownBtn" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" style="border-color: rgba(0,0,0,0.12); height: 38px;">
+                                        <span id="selectedBookingsCountText" class="text-muted">اختر الأفراد... (0 محدد)</span>
+                                    </button>
+                                    <div class="dropdown-menu w-100 p-3 shadow-lg" aria-labelledby="bookingDropdownBtn" style="max-height: 350px; overflow-y: auto;">
+                                        <input type="text" id="bookingSearchInput" class="form-control mb-2" placeholder="ابحث باسم المسافر أو رقم الحجز..." autocomplete="off" oninput="filterBookingsList()" />
+                                        <div class="dropdown-divider"></div>
+                                        <div id="bookingsListContainer" class="d-flex flex-column gap-2" style="max-height: 200px; overflow-y: auto;">
+                                            <!-- Dynamic individual items will be rendered here -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- اسم المودع والمبلغ الكلي للفرادى -->
+                            <div class="row g-2 mb-3 d-none" id="individualInputsRow">
+                                <div class="col-md-6">
+                                    <label class="form-label small text-secondary fw-semibold">اسم المودع</label>
+                                    <input type="text" name="IndividualDepositorName" id="individualDepositorNameInput" class="form-control form-control-sm" placeholder="اسم مودع الأفراد" oninput="calculateTotalAmountFromRows()" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small text-secondary fw-semibold">المبلغ الكلي للمسافرين الفرادى</label>
+                                    <input type="number" id="individualTotalAmountInput" step="0.01" class="form-control form-control-sm" placeholder="0.00" oninput="distributeIndividualAmount(this.value)" onchange="syncSectionTotalAmountInputs(); calculateTotalAmountFromRows();" />
+                                </div>
+                            </div>
+
+                            <!-- تفاصيل دفعات المسافرين الفرادى -->
+                            <div id="individualPassengersList" class="d-flex flex-column gap-2"></div>
+                        </div>
+
+                        <small class="text-info d-block mt-1">عند ربط الحركة بحجز، سيتم تثبيت العملة على الجنيه (EGP) ونوع الحركة على (وارد/إيداع).</small>
+                    </div>
+
+                    <div class="row g-2 mb-3" id="generalAmountDepositorRow">
+                        <div class="col-md-6">
+                            <label class="form-label">المبلغ / القيمة *</label>
+                            <input type="number" name="Amount" id="amountInput" step="0.01" class="form-control" required placeholder="0.00" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" id="nameLabel">اسم مودع النقدية *</label>
+                            <input type="text" name="DepositorOrWithdrawerName" id="depositorNameInput" class="form-control" required placeholder="الاسم ثلاثي" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3 d-none" id="withdrawalCategoryWrapper">
+                        <label class="form-label">جهة الصرف / سحب النقدية لـ *</label>
+                        <select name="WithdrawalCategory" id="withdrawalCategorySelect" class="form-select">
+                            <option value="">اختر جهة الصرف...</option>
+                            <option value="البوابة">البوابة (Portal / Gateway)</option>
+                            <option value="الوكيل السعودي">الوكيل السعودي (Saudi Agent / Broker)</option>
+                            <option value="المطار">المطار (Airport)</option>
+                            <option value="البرنامج">البرنامج (Program / Accommodation)</option>
+                            <option value="أوامر الاسناد">أوامر الاسناد (Assignment Orders)</option>
+                        </select>
+                    </div>
+
+
+
+                    <div class="mb-3">
+                        <label class="form-label">اسم البنك (اتركه فارغاً في حال نقدية الدرج)</label>
+                        <input type="text" name="BankName" class="form-control" placeholder="مثال: البنك الأهلي، بنك مصر" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">البيان وسبب الحركة *</label>
+                        <textarea name="Description" class="form-control" rows="2" required placeholder="تفاصيل إضافية حول الحركة"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ الحركة</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Client-side unified search and filters for the safe logs list table
+        function applySafeFilters() {
+            const query = document.getElementById("safeSearch").value.toLowerCase();
+            const fromDateStr = document.getElementById("fromDateFilter").value;
+            const toDateStr = document.getElementById("toDateFilter").value;
+            const selectedPartner = document.getElementById("partnerFilter").value;
+
+            const rows = document.querySelectorAll(".safe-row");
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                const dateStr = row.getAttribute("data-date") || ""; // YYYY-MM-DD
+                const partnerStr = row.getAttribute("data-partner") || "";
+
+                // Check search query
+                const matchesQuery = !query || text.includes(query);
+
+                // Check partner filter
+                const matchesPartner = !selectedPartner || partnerStr === selectedPartner;
+
+                // Check date filters
+                let matchesDate = true;
+                if (fromDateStr) {
+                    matchesDate = matchesDate && (dateStr >= fromDateStr);
+                }
+                if (toDateStr) {
+                    matchesDate = matchesDate && (dateStr <= toDateStr);
+                }
+
+                if (matchesQuery && matchesPartner && matchesDate) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            });
+        }
+
+        document.getElementById("safeSearch").addEventListener("input", applySafeFilters);
+        document.getElementById("fromDateFilter").addEventListener("change", applySafeFilters);
+        document.getElementById("toDateFilter").addEventListener("change", applySafeFilters);
+        document.getElementById("partnerFilter").addEventListener("change", applySafeFilters);
+
+        // Distribute amount to dynamic rows when overallAmountInput is typed
+        document.getElementById("overallAmountInput").addEventListener("input", (e) => {
+            if (selectedBookingIds.length > 0) {
+                distributeOverallAmount(parseFloat(e.target.value) || 0);
+            }
+        });
+
+        // Format overallAmountInput on blur / change
+        document.getElementById("overallAmountInput").addEventListener("change", (e) => {
+            if (selectedBookingIds.length > 0) {
+                syncSectionTotalAmountInputs();
+                calculateTotalAmountFromRows();
+            }
+        });
+
+        // Distribute amount to dynamic rows equally (Water-filling equal distribution)
+        function distributeAmountToSubRows(bookingsList, totalAmount) {
+            let remainingAmount = totalAmount;
+
+            // Iterative equal distribution loop
+            while (remainingAmount > 0.005) {
+                const activeBookings = bookingsList.filter(b => !b.isFull);
+                if (activeBookings.length === 0) {
+                    break;
+                }
+
+                const count = activeBookings.length;
+                const share = remainingAmount / count;
+
+                // Check if any active booking exceeds its remaining limit
+                let bottleneck = null;
+                let minHeadroom = Infinity;
+
+                activeBookings.forEach(b => {
+                    const headroom = b.remaining - b.allocated;
+                    if (b.allocated + share >= b.remaining) {
+                        if (headroom < minHeadroom) {
+                            minHeadroom = headroom;
+                            bottleneck = b;
+                        }
+                    }
+                });
+
+                if (bottleneck) {
+                    // Cap the booking that hits its limit first
+                    const headroom = bottleneck.remaining - bottleneck.allocated;
+                    bottleneck.allocated = bottleneck.remaining;
+                    bottleneck.isFull = true;
+                    remainingAmount -= headroom;
+                } else {
+                    // Distribute remaining amount equally
+                    activeBookings.forEach(b => {
+                        b.allocated += share;
+                    });
+                    remainingAmount = 0;
+                }
+            }
+        }
+
+        // Distributes overall amount to all selected bookings
+        function distributeOverallAmount(totalAmount) {
+            if (selectedBookingIds.length === 0) return;
+
+            let bookings = selectedBookingIds.map(id => {
+                const b = allActiveBookings.find(x => x.id === id);
+                return {
+                    id: id,
+                    remaining: b ? b.remainingBalance : 0,
+                    allocated: 0,
+                    isFull: false
+                };
+            });
+
+            distributeAmountToSubRows(bookings, totalAmount);
+
+            // Populate values in the inputs and sync map
+            bookings.forEach(b => {
+                bookingPaymentsMap[b.id] = b.allocated;
+                const input = document.querySelector(`.booking-payment-amount[data-booking-id="${b.id}"]`);
+                if (input) {
+                    input.value = b.allocated.toFixed(2);
+                }
+            });
+
+            // Update group and individual total amount inputs in UI
+            syncSectionTotalAmountInputs();
+            calculateTotalAmountFromRows("overallAmountInput");
+        }
+
+        // Syncs group-level and individual-level total amount input fields
+        function syncSectionTotalAmountInputs(excludeInputId) {
+            // Group Totals for each active group
+            const activeGroups = [...new Set(Array.from(document.querySelectorAll('.booking-payment-amount[data-group]')).map(input => input.getAttribute('data-group')))];
+            activeGroups.forEach(groupNum => {
+                const specificInputId = `groupTotalAmountInput_${groupNum}`;
+                if (excludeInputId !== specificInputId) {
+                    let groupTotal = 0;
+                    document.querySelectorAll(`.booking-payment-amount[data-group="${groupNum}"]`).forEach(input => {
+                        groupTotal += parseFloat(input.value || "0");
+                    });
+                    const groupTotalInput = document.getElementById(specificInputId);
+                    if (groupTotalInput) {
+                        groupTotalInput.value = groupTotal > 0 ? groupTotal.toFixed(2) : "";
+                    }
+                }
+            });
+
+            // Individual Total
+            if (excludeInputId !== "individualTotalAmountInput") {
+                let indTotal = 0;
+                document.querySelectorAll(`.booking-payment-amount:not([data-group])`).forEach(input => {
+                    indTotal += parseFloat(input.value || "0");
+                });
+                const indTotalInput = document.getElementById("individualTotalAmountInput");
+                if (indTotalInput) {
+                    indTotalInput.value = indTotal > 0 ? indTotal.toFixed(2) : "";
+                }
+            }
+        }
+
+        const allActiveBookings = @Html.Raw(Json.Serialize(ViewBag.ActiveBookings)) || [];
+        let selectedBookingIds = [];
+        const bookingPaymentsMap = {};
+
+        // Open Modal
+        function openCreateTransactionModal() {
+            const form = document.querySelector("#safeModalElement form");
+            if (form) {
+                form.reset();
+            }
+            
+            selectedBookingIds = [];
+            // Clear payment map on modal open
+            for (const key in bookingPaymentsMap) delete bookingPaymentsMap[key];
+
+            syncSelection();
+
+            const modalEl = document.getElementById("safeModalElement");
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+
+            // Set initial state
+            onTransactionTypeChanged("Deposit");
+        }
+
+        // Adjust rate read-only status based on currency selection
+        function adjustExchangeRateInput(val) {
+            const rateInput = document.getElementById("exchangeRateInput");
+            if (val === "SAR") {
+                rateInput.value = "13.0000";
+                rateInput.readOnly = false;
+            } else {
+                rateInput.value = "1.0000";
+                rateInput.readOnly = true;
+            }
+        }
+// Toggle form fields based on transaction type
+        function onTransactionTypeChanged(val) {
+            const partnerWrapper = document.getElementById("partnerWrapper");
+            const bookingWrapper = document.getElementById("bookingWrapper");
+            const withdrawalCategoryWrapper = document.getElementById("withdrawalCategoryWrapper");
+            const withdrawalCategorySelect = document.getElementById("withdrawalCategorySelect");
+            const partnerSelect = document.getElementById("partnerSelect");
+            const nameLabel = document.getElementById("nameLabel");
+            const typeSelect = document.getElementById("transactionTypeSelect");
+            const currencySelect = document.getElementById("currencySelect");
+            const generalRow = document.getElementById("generalAmountDepositorRow");
+            const amountInput = document.getElementById("amountInput");
+            const depositorNameInput = document.getElementById("depositorNameInput");
+
+            // Reset bookings checked
+            selectedBookingIds = [];
+            for (const key in bookingPaymentsMap) delete bookingPaymentsMap[key];
+            syncSelection();
+
+            if (val === "Deposit") {
+                partnerWrapper.classList.remove("d-none");
+                partnerSelect.setAttribute("required", "true");
+                
+                withdrawalCategoryWrapper.classList.add("d-none");
+                withdrawalCategorySelect.removeAttribute("required");
+                withdrawalCategorySelect.value = "";
+
+                nameLabel.textContent = "اسم مودع النقدية *";
+                
+                onPartnerSelected(partnerSelect.value);
+            } else {
+                partnerWrapper.classList.add("d-none");
+                partnerSelect.removeAttribute("required");
+                partnerSelect.value = "";
+                
+                bookingWrapper.classList.add("d-none");
+
+                withdrawalCategoryWrapper.classList.remove("d-none");
+                withdrawalCategorySelect.setAttribute("required", "true");
+
+                nameLabel.textContent = "اسم مستلم النقدية *";
+
+                // Enable selections
+                typeSelect.removeAttribute("disabled");
+                currencySelect.removeAttribute("disabled");
+                partnerSelect.removeAttribute("disabled");
+
+                // Show general inputs row
+                generalRow.classList.remove("d-none");
+                amountInput.setAttribute("required", "true");
+                depositorNameInput.setAttribute("required", "true");
+            }
+        }
+
+        // Filter bookings list based on selected partner and render dropdowns dynamically
+        function onPartnerSelected(partnerId) {
+            const bookingWrapper = document.getElementById("bookingWrapper");
+            
+            // Clear current selections
+            selectedBookingIds = [];
+            for (const key in bookingPaymentsMap) delete bookingPaymentsMap[key];
+            syncSelection();
+
+            if (partnerId) {
+                bookingWrapper.classList.remove("d-none");
+                renderBookingDropdowns(partnerId);
+            } else {
+                bookingWrapper.classList.add("d-none");
+            }
+        }
+
+        // Render groups and individuals dropdowns based on partner
+        function renderBookingDropdowns(partnerId) {
+            const groupsContainer = document.getElementById("groupsListContainer");
+            const bookingsContainer = document.getElementById("bookingsListContainer");
+
+            groupsContainer.innerHTML = "";
+            bookingsContainer.innerHTML = "";
+
+            if (!partnerId) return;
+
+            // Filter bookings belonging to partner
+            const partnerBookings = allActiveBookings.filter(b => b.partnerId === partnerId);
+
+            // Group by GroupNumber
+            let groups = {};
+            let individuals = [];
+
+            partnerBookings.forEach(b => {
+                if (b.groupNumber && b.groupNumber.trim() !== "") {
+                    const groupNum = b.groupNumber.trim();
+                    if (!groups[groupNum]) {
+                        groups[groupNum] = [];
+                    }
+                    groups[groupNum].push(b);
+                } else {
+                    individuals.push(b);
+                }
+            });
+
+            // Render Groups
+            for (const groupNum in groups) {
+                const grpBookings = groups[groupNum];
+                const count = grpBookings.length;
+                const totalRemaining = grpBookings.reduce((sum, b) => sum + b.remainingBalance, 0);
+
+                const div = document.createElement("div");
+                div.className = "form-check group-item";
+                div.innerHTML = `
+                    <input class="form-check-input group-chk" type="checkbox" value="${groupNum}" id="chk_g_${groupNum}" onchange="onGroupCheckChanged('${groupNum}', this.checked)" />
+                    <label class="form-check-label text-dark fw-semibold" for="chk_g_${groupNum}">
+                        مجموعة: ${groupNum} <small class="text-muted">(${count} مسافرين - المتبقي: ${totalRemaining.toFixed(2)} ج.م)</small>
+                    </label>
+                `;
+                groupsContainer.appendChild(div);
+            }
+
+            // Render Individuals
+            individuals.forEach(b => {
+                const div = document.createElement("div");
+                div.className = "form-check individual-item";
+                div.innerHTML = `
+                    <input class="form-check-input booking-chk" type="checkbox" value="${b.id}" id="chk_b_${b.id}" data-name="${b.passengerName}" data-number="${b.bookingNumber}" data-remaining="${b.remainingBalance}" onchange="onIndividualCheckChanged('${b.id}', this.checked)" />
+                    <label class="form-check-label text-dark fw-semibold" for="chk_b_${b.id}">
+                        حجز: ${b.bookingNumber} - المسافر: ${b.passengerName} <small class="text-muted">(المتبقي: ${b.remainingBalance.toFixed(2)} ج.م)</small>
+                    </label>
+                `;
+                bookingsContainer.appendChild(div);
+            });
+        }
+
+        // On Group Checked
+        function onGroupCheckChanged(groupNum, isChecked) {
+            const partnerId = document.getElementById("partnerSelect").value;
+            const partnerBookings = allActiveBookings.filter(b => b.partnerId === partnerId);
+            const grpBookings = partnerBookings.filter(b => b.groupNumber && b.groupNumber.trim() === groupNum);
+
+            grpBookings.forEach(b => {
+                if (isChecked) {
+                    if (!selectedBookingIds.includes(b.id)) {
+                        selectedBookingIds.push(b.id);
+                    }
+                } else {
+                    selectedBookingIds = selectedBookingIds.filter(id => id !== b.id);
+                    delete bookingPaymentsMap[b.id];
+                }
+            });
+
+            syncSelection();
+        }
+
+        // On Individual Checked
+        function onIndividualCheckChanged(bookingId, isChecked) {
+            if (isChecked) {
+                if (!selectedBookingIds.includes(bookingId)) {
+                    selectedBookingIds.push(bookingId);
+                }
+            } else {
+                selectedBookingIds = selectedBookingIds.filter(id => id !== bookingId);
+                delete bookingPaymentsMap[bookingId];
+            }
+
+            syncSelection();
+        }
+
+        // Filter groups list by search query
+        function filterGroupsList() {
+            const query = (document.getElementById("groupSearchInput").value || "").toLowerCase().trim();
+            document.querySelectorAll("#groupsListContainer .group-item").forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = !query || text.includes(query) ? "" : "none";
+            });
+        }
+
+        // Filter individuals list by search query
+        function filterBookingsList() {
+            const query = (document.getElementById("bookingSearchInput").value || "").toLowerCase().trim();
+            document.querySelectorAll("#bookingsListContainer .individual-item").forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = !query || text.includes(query) ? "" : "none";
+            });
+        }
+
+        // Calculate total amount as the sum of all booking payment rows
+        function calculateTotalAmountFromRows(excludeInputId) {
+            let total = 0;
+            document.querySelectorAll(".booking-payment-amount").forEach(input => {
+                total += parseFloat(input.value || "0");
+            });
+
+            // Set hidden field value and overall total in UI
+            const amountInput = document.getElementById("amountInput");
+            if (amountInput) {
+                amountInput.value = total > 0 ? total.toFixed(2) : "";
+            }
+            
+            if (excludeInputId !== "overallAmountInput") {
+                const overallAmountInput = document.getElementById("overallAmountInput");
+                if (overallAmountInput) {
+                    overallAmountInput.value = total > 0 ? total.toFixed(2) : "";
+                }
+            }
+
+            // Update depositorNameInput based on section inputs
+            const groupDep = (document.getElementById("groupDepositorNameInput")?.value || "").trim();
+            const indDep = (document.getElementById("individualDepositorNameInput")?.value || "").trim();
+            const combined = [groupDep, indDep].filter(x => x).join(" / ");
+
+            const depositorNameInput = document.getElementById("depositorNameInput");
+            if (depositorNameInput) {
+                if (combined) {
+                    depositorNameInput.value = combined;
+                } else {
+                    // Fallback to selected passenger names
+                    const selectedBookings = allActiveBookings.filter(b => selectedBookingIds.includes(b.id));
+                    const names = [...new Set(selectedBookings.map(b => b.passengerName))];
+                    depositorNameInput.value = names.join(" / ");
+                }
+            }
+        }
+
+        // Passenger individual payment change handler
+        function onPassengerInputChanged(groupNum) {
+            syncSectionTotalAmountInputs();
+            calculateTotalAmountFromRows();
+        }
+
+        // Distributes group-level total amount equally to its passenger inputs
+        function distributeGroupAmount(totalAmountVal) {
+            const totalAmount = parseFloat(totalAmountVal) || 0;
+            const passengerInputs = document.querySelectorAll(`.booking-payment-amount[data-group]`);
+            if (passengerInputs.length === 0) return;
+
+            let passengers = Array.from(passengerInputs).map(input => {
+                const bookingId = input.getAttribute("data-booking-id");
+                const remaining = parseFloat(input.getAttribute("data-remaining") || "0");
+                return {
+                    id: bookingId,
+                    remaining: remaining,
+                    allocated: 0,
+                    isFull: false,
+                    inputElement: input
+                };
+            });
+
+            distributeAmountToSubRows(passengers, totalAmount);
+
+            passengers.forEach(p => {
+                p.inputElement.value = p.allocated.toFixed(2);
+                bookingPaymentsMap[p.id] = p.allocated; // Sync to map
+            });
+
+            syncSectionTotalAmountInputs("groupTotalAmountInput");
+            calculateTotalAmountFromRows();
+        }
+
+        // Distributes group-specific total amount equally to its passenger inputs
+        function distributeSpecificGroupAmount(groupNum, totalAmountVal) {
+            const totalAmount = parseFloat(totalAmountVal) || 0;
+            const passengerInputs = document.querySelectorAll(`.booking-payment-amount[data-group="${groupNum}"]`);
+            if (passengerInputs.length === 0) return;
+
+            let passengers = Array.from(passengerInputs).map(input => {
+                const bookingId = input.getAttribute("data-booking-id");
+                const remaining = parseFloat(input.getAttribute("data-remaining") || "0");
+                return {
+                    id: bookingId,
+                    remaining: remaining,
+                    allocated: 0,
+                    isFull: false,
+                    inputElement: input
+                };
+            });
+
+            distributeAmountToSubRows(passengers, totalAmount);
+
+            passengers.forEach(p => {
+                p.inputElement.value = p.allocated.toFixed(2);
+                bookingPaymentsMap[p.id] = p.allocated; // Sync to map
+            });
+
+            syncSectionTotalAmountInputs(`groupTotalAmountInput_${groupNum}`);
+            calculateTotalAmountFromRows();
+        }
+
+        // Distributes individual-level total amount equally to its passenger inputs
+        function distributeIndividualAmount(totalAmountVal) {
+            const totalAmount = parseFloat(totalAmountVal) || 0;
+            const passengerInputs = document.querySelectorAll(`.booking-payment-amount:not([data-group])`);
+            if (passengerInputs.length === 0) return;
+
+            let passengers = Array.from(passengerInputs).map(input => {
+                const bookingId = input.getAttribute("data-booking-id");
+                const remaining = parseFloat(input.getAttribute("data-remaining") || "0");
+                return {
+                    id: bookingId,
+                    remaining: remaining,
+                    allocated: 0,
+                    isFull: false,
+                    inputElement: input
+                };
+            });
+
+            distributeAmountToSubRows(passengers, totalAmount);
+
+            passengers.forEach(p => {
+                p.inputElement.value = p.allocated.toFixed(2);
+                bookingPaymentsMap[p.id] = p.allocated; // Sync to map
+            });
+
+            syncSectionTotalAmountInputs("individualTotalAmountInput");
+            calculateTotalAmountFromRows();
+        }
+
+        // Syncs DOM selections and states based on selectedBookingIds array
+        function syncSelection() {
+            const countText = document.getElementById("selectedBookingsCountText");
+            const countGroupsText = document.getElementById("selectedGroupsCountText");
+            const typeSelect = document.getElementById("transactionTypeSelect");
+            const currencySelect = document.getElementById("currencySelect");
+            const partnerSelect = document.getElementById("partnerSelect");
+            
+            const generalRow = document.getElementById("generalAmountDepositorRow");
+            const amountInput = document.getElementById("amountInput");
+            const depositorNameInput = document.getElementById("depositorNameInput");
+            
+            const bookingWrapper = document.getElementById("bookingWrapper");
+            const hiddenContainer = document.getElementById("hiddenBookingIdsContainer");
+
+            const groupInputsRow = document.getElementById("groupInputsRow");
+            const groupPassengersList = document.getElementById("groupPassengersList");
+
+            const individualInputsRow = document.getElementById("individualInputsRow");
+            const individualPassengersList = document.getElementById("individualPassengersList");
+
+            // Clear hidden inputs
+            hiddenContainer.innerHTML = "";
+
+            const partnerId = partnerSelect.value;
+
+            if (!partnerId) {
+                // Not in booking mode (General Company Safe)
+                if (countText) {
+                    countText.textContent = "اختر الأفراد... (0 محدد)";
+                    countText.className = "text-muted";
+                }
+                if (countGroupsText) {
+                    countGroupsText.textContent = "اختر المجموعات... (0 محدد)";
+                    countGroupsText.className = "text-muted";
+                }
+
+                typeSelect.removeAttribute("disabled");
+                currencySelect.removeAttribute("disabled");
+                partnerSelect.removeAttribute("disabled");
+
+                // Show general inputs row & make them required
+                generalRow.classList.remove("d-none");
+                amountInput.setAttribute("required", "true");
+                depositorNameInput.setAttribute("required", "true");
+
+                // Reset booking-related fields
+                const overallInput = document.getElementById("overallAmountInput");
+                if (overallInput) overallInput.value = "";
+                if (groupInputsRow) groupInputsRow.classList.add("d-none");
+                if (groupPassengersList) groupPassengersList.innerHTML = "";
+                if (individualInputsRow) individualInputsRow.classList.add("d-none");
+                if (individualPassengersList) individualPassengersList.innerHTML = "";
+
+                bookingWrapper.classList.add("d-none");
+                return;
+            }
+
+            // Booking Mode (Partner selected)
+            bookingWrapper.classList.remove("d-none");
+
+            // Hide general inputs row and disable standard validations
+            generalRow.classList.add("d-none");
+            amountInput.removeAttribute("required");
+            depositorNameInput.removeAttribute("required");
+
+            // Lock controls
+            typeSelect.value = "Deposit";
+            typeSelect.setAttribute("disabled", "true");
+            currencySelect.value = "EGP";
+            adjustExchangeRateInput("EGP");
+            currencySelect.setAttribute("disabled", "true");
+
+            // Sync hidden inputs for model binding
+            selectedBookingIds.forEach(id => {
+                const hidden = document.createElement("input");
+                hidden.type = "hidden";
+                hidden.name = "BookingIds";
+                hidden.value = id;
+                hiddenContainer.appendChild(hidden);
+            });
+
+            // Find matching bookings
+            const selectedBookings = allActiveBookings.filter(b => selectedBookingIds.includes(b.id));
+
+            // Sync Groups Count Text
+            const selectedGroups = [...new Set(selectedBookings.map(b => b.groupNumber).filter(g => g && g.trim() !== ""))];
+            if (countGroupsText) {
+                if (selectedGroups.length > 0) {
+                    countGroupsText.textContent = `${selectedGroups.length} مجموعات محددة`;
+                    countGroupsText.className = "text-dark fw-bold";
+                } else {
+                    countGroupsText.textContent = "اختر المجموعات... (0 محدد)";
+                    countGroupsText.className = "text-muted";
+                }
+            }
+
+            // Sync Individuals Count Text
+            const selectedIndividuals = selectedBookings.filter(b => !b.groupNumber || b.groupNumber.trim() === "");
+            if (countText) {
+                if (selectedIndividuals.length > 0) {
+                    countText.textContent = `${selectedIndividuals.length} أفراد محددة`;
+                    countText.className = "text-dark fw-bold";
+                } else {
+                    countText.textContent = "اختر الأفراد... (0 محدد)";
+                    countText.className = "text-muted";
+                }
+            }
+
+            if (selectedBookings.length > 0) {
+                partnerSelect.value = selectedBookings[0].partnerId;
+                partnerSelect.setAttribute("disabled", "true");
+            }
+
+            // Clear Lists
+            groupPassengersList.innerHTML = "";
+            individualPassengersList.innerHTML = "";
+
+            // Grouping selected bookings
+            let groupedMap = {};
+            let individualList = [];
+
+            selectedBookings.forEach(b => {
+                if (b.groupNumber && b.groupNumber.trim() !== "") {
+                    const grp = b.groupNumber.trim();
+                    if (!groupedMap[grp]) {
+                        groupedMap[grp] = [];
+                    }
+                    groupedMap[grp].push(b);
+                } else {
+                    individualList.push(b);
+                }
+            });
+
+            // 1. Render Groups Section
+            const uniqueGroupKeys = Object.keys(groupedMap);
+            if (uniqueGroupKeys.length > 0) {
+                // Keep global groupInputsRow hidden (do not remove d-none)
+                
+                uniqueGroupKeys.forEach(groupNum => {
+                    const bookingsInGrp = groupedMap[groupNum];
+                    
+                    const groupSubCard = document.createElement("div");
+                    groupSubCard.className = "group-card-border text-dark";
+
+                    const passengerRowsHtml = bookingsInGrp.map(b => {
+                        const savedVal = bookingPaymentsMap[b.id] !== undefined ? bookingPaymentsMap[b.id] : b.remainingBalance;
+                        bookingPaymentsMap[b.id] = savedVal; // sync default
+
+                        return `
+                            <div class="row g-2 align-items-center booking-payment-row pb-2 border-bottom border-secondary mb-2" id="row_b_${b.id}" data-booking-id="${b.id}" data-group="${groupNum}">
+                                <div class="col-6">
+                                    <span class="fw-semibold text-dark small d-block">${b.passengerName}</span>
+                                    <span class="text-muted" style="font-size: 0.72rem;">حجز: ${b.bookingNumber}</span>
+                                </div>
+                                <div class="col-3 text-muted small text-end">
+                                    <span>المتبقي: ${b.remainingBalance.toFixed(2)} ج.م</span>
+                                </div>
+                                <div class="col-3">
+                                    <input type="number" class="form-control form-control-sm booking-payment-amount" name="BookingPayments[${b.id}]" data-booking-id="${b.id}" data-group="${groupNum}" data-remaining="${b.remainingBalance}" placeholder="الدفعة" required step="0.01" min="0" max="${b.remainingBalance}" value="${savedVal.toFixed(2)}" oninput="onPassengerPaymentInput('${b.id}', this.value)" />
+                                </div>
+                            </div>
+                        `;
+                    }).join("");
+
+                    groupSubCard.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom">
+                            <span class="fw-bold text-secondary text-start" style="font-size: 0.85rem;">مجموعة: ${groupNum}</span>
+                            <div class="d-flex align-items-center gap-2">
+                                <label class="small text-muted mb-0" style="font-size: 0.75rem;">المبلغ الإجمالي للمجموعة:</label>
+                                <input type="number" id="groupTotalAmountInput_${groupNum}" step="0.01" class="form-control form-control-sm text-end fw-bold border-primary text-dark" 
+                                       placeholder="0.00" style="width: 120px; height: 28px; background-color: rgba(13, 110, 253, 0.05);"
+                                       oninput="distributeSpecificGroupAmount('${groupNum}', this.value)" onchange="syncSectionTotalAmountInputs(); calculateTotalAmountFromRows();" />
+                            </div>
+                        </div>
+                        <div class="d-flex flex-column gap-2">${passengerRowsHtml}</div>
+                    `;
+                    groupPassengersList.appendChild(groupSubCard);
+                });
+            } else {
+                document.getElementById("groupTotalAmountInput").value = "";
+                document.getElementById("groupDepositorNameInput").value = "";
+            }
+
+            // 2. Render Individuals Section
+            if (individualList.length > 0) {
+                individualInputsRow.classList.remove("d-none");
+
+                const indRowsHtml = individualList.map(b => {
+                    const savedVal = bookingPaymentsMap[b.id] !== undefined ? bookingPaymentsMap[b.id] : b.remainingBalance;
+                    bookingPaymentsMap[b.id] = savedVal;
+
+                    return `
+                        <div class="row g-2 align-items-center booking-payment-row pb-2 border-bottom border-secondary mb-2" id="row_b_${b.id}" data-booking-id="${b.id}">
+                            <div class="col-6">
+                                <span class="fw-semibold text-dark small d-block">${b.passengerName}</span>
+                                <span class="text-muted" style="font-size: 0.72rem;">حجز: ${b.bookingNumber}</span>
+                            </div>
+                            <div class="col-3 text-muted small text-end">
+                                <span>المتبقي: ${b.remainingBalance.toFixed(2)} ج.م</span>
+                            </div>
+                            <div class="col-3">
+                                <input type="number" class="form-control form-control-sm booking-payment-amount" name="BookingPayments[${b.id}]" data-booking-id="${b.id}" data-remaining="${b.remainingBalance}" placeholder="الدفعة" required step="0.01" min="0" max="${b.remainingBalance}" value="${savedVal.toFixed(2)}" oninput="onPassengerPaymentInput('${b.id}', this.value)" />
+                            </div>
+                        </div>
+                    `;
+                }).join("");
+
+                individualPassengersList.innerHTML = indRowsHtml;
+            } else {
+                individualInputsRow.classList.add("d-none");
+                document.getElementById("individualTotalAmountInput").value = "";
+                document.getElementById("individualDepositorNameInput").value = "";
+            }
+
+            bookingWrapper.classList.remove("d-none");
+
+            // Auto-populate group depositor name with the checked group passengers
+            const groupBookings = selectedBookings.filter(b => b.groupNumber && b.groupNumber.trim() !== "");
+            const groupNames = [...new Set(groupBookings.map(b => b.passengerName))];
+            const groupDepInput = document.getElementById("groupDepositorNameInput");
+            if (groupDepInput) {
+                groupDepInput.value = groupNames.join(" / ");
+            }
+
+            // Auto-populate individual depositor name with the checked individual passengers
+            const individualBookings = selectedBookings.filter(b => !b.groupNumber || b.groupNumber.trim() === "");
+            const individualNames = [...new Set(individualBookings.map(b => b.passengerName))];
+            const individualDepInput = document.getElementById("individualDepositorNameInput");
+            if (individualDepInput) {
+                individualDepInput.value = individualNames.join(" / ");
+            }
+
+            // General depositor backup
+            // Build list of all passenger names
+            let passengerNames = [];
+            selectedBookings.forEach(b => {
+                if (b.passengerName && !passengerNames.includes(b.passengerName)) {
+                    passengerNames.push(b.passengerName);
+                }
+            });
+
+            if (passengerNames.length > 0) {
+                depositorNameInput.value = passengerNames.join(" / ");
+            }
+
+            calculateTotalAmountFromRows();
+            syncSectionTotalAmountInputs();
+            amountInput.removeAttribute("readonly");
+        }
+
+        // Passenger individual payment change handler
+        function onPassengerPaymentInput(bookingId, value) {
+            const val = parseFloat(value) || 0;
+            bookingPaymentsMap[bookingId] = val;
+            
+            syncSectionTotalAmountInputs();
+            calculateTotalAmountFromRows();
+        }
+
+        async function submitSafeForm(event, form) {
+            event.preventDefault();
+
+            // Temporary enable disabled fields to serialize them
+            const disabledInputs = form.querySelectorAll(':disabled');
+            disabledInputs.forEach(i => i.removeAttribute('disabled'));
+
+            const formData = new FormData(form);
+
+            // Re-disable
+            disabledInputs.forEach(i => i.setAttribute('disabled', 'true'));
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
+
+            try {
+                const result = await BusinessManagementAjax(form.action, form.method, formData);
+                if (result.success) {
+                    BusinessManagementAlert(result.message, "success");
+                    const modalEl = document.getElementById("safeModalElement");
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    modal.hide();
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    BusinessManagementAlert(result.message, "danger");
+                    submitBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error("Safe form submit error:", error);
+                submitBtn.disabled = false;
+            }
+        }
+
+        // AJAX Deletion
+        async function deleteTransaction(id) {
+            if (window.Swal) {
+                const swalResult = await Swal.fire({
+                    title: 'تأكيد الحذف',
+                    text: 'هل أنت متأكد من حذف قيد هذه الحركة من الخزينة؟',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'نعم، احذف',
+                    cancelButtonText: 'إلغاء',
+                    customClass: {
+                        popup: 'bms-swal-confirm',
+                        confirmButton: 'btn btn-danger',
+                        cancelButton: 'btn btn-outline-secondary'
+                    },
+                    buttonsStyling: false
+                });
+
+                if (!swalResult.isConfirmed) return;
+            } else {
+                if (!confirm("هل أنت متأكد من حذف قيد هذه الحركة من الخزينة؟")) {
+                    return;
+                }
+            }
+
+            try {
+                const result = await BusinessManagementAjax(`/Safe/Delete/${id}`, "POST");
+                if (result.success) {
+                    BusinessManagementAlert(result.message, "success");
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    BusinessManagementAlert(result.message, "danger");
+                }
+            } catch (error) {
+                console.error("Safe deletion error:", error);
+            }
+        }
+
+        function printDisplayedSafeTransactions() {
+            const visibleRows = Array.from(document.querySelectorAll(".safe-row")).filter(row => row.style.display !== "none");
+            if (visibleRows.length === 0) {
+                if (window.BusinessManagementAlert) {
+                    BusinessManagementAlert("لا توجد حركات خزينة معروضة حالياً للطباعة.", "warning");
+                } else {
+                    alert("لا توجد حركات خزينة معروضة حالياً للطباعة.");
+                }
+                return;
+            }
+            const ids = visibleRows.map(row => row.getAttribute("data-id")).join(",");
+            window.open(`/Safe/PrintBulk?ids=${ids}`, '_blank');
+        }
+    </script>
+}

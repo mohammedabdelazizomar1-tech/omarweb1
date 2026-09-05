@@ -1,0 +1,257 @@
+@model IEnumerable<BusinessManagement.Application.DTOs.BookingDto>
+@{
+    Layout = null;
+    var paymentsMap = ViewBag.PaymentsMap as Dictionary<Guid, IEnumerable<BusinessManagement.Application.DTOs.BookingPaymentDto>> ?? new Dictionary<Guid, IEnumerable<BusinessManagement.Application.DTOs.BookingPaymentDto>>();
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <title>طباعة جماعية للفواتير</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet" />
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #000;
+            padding: 20px 0;
+        }
+        .invoice-page {
+            background-color: #fff;
+            max-width: 800px;
+            margin: 0 auto 30px auto;
+            padding: 40px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            page-break-after: always;
+        }
+        .invoice-page:last-child {
+            margin-bottom: 0;
+            page-break-after: avoid;
+        }
+        .invoice-header {
+            border-bottom: 3px double #000;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .section-title {
+            background-color: #f2f2f2;
+            padding: 8px 15px;
+            font-weight: bold;
+            border-right: 5px solid #000;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #444;
+        }
+        .financial-table th {
+            background-color: #343a40 !important;
+            color: #fff !important;
+        }
+        .no-print-bar {
+            background-color: #212529;
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid #343a40;
+            margin-bottom: 30px;
+        }
+        @@media print {
+            body {
+                background-color: #fff !important;
+                padding: 0 !important;
+            }
+            .invoice-page {
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 auto !important;
+                max-width: 100% !important;
+                page-break-after: always !important;
+            }
+            .invoice-page:last-child {
+                page-break-after: avoid !important;
+            }
+            .no-print-bar {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Action bar (screen only) -->
+    <div class="no-print-bar text-center">
+        <button onclick="window.print();" class="btn btn-primary px-4 me-2">
+            <i class="bi bi-printer-fill me-1"></i> بدء طباعة الكل
+        </button>
+        <button onclick="window.close();" class="btn btn-outline-light px-4">إغلاق الصفحة</button>
+    </div>
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="container text-center py-5">
+            <div class="alert alert-warning">لم يتم تحديد أي حجوزات للطباعة الجماعية.</div>
+        </div>
+    }
+    else
+    {
+        foreach (var booking in Model)
+        {
+            var payments = paymentsMap.TryGetValue(booking.Id, out var pmts) ? pmts : Enumerable.Empty<BusinessManagement.Application.DTOs.BookingPaymentDto>();
+
+            <div class="invoice-page">
+                <!-- Company header -->
+                <div class="invoice-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2>شركة خدمات الحج والعمرة والسياحة</h2>
+                        <p class="text-muted m-0">بيان تفصيلي ببرنامج ومصروفات المسافر</p>
+                    </div>
+                    <div class="text-end">
+                        <p class="m-0 fw-bold">رقم الفاتورة: @booking.BookingNumber</p>
+                        <p class="m-0">التاريخ: @DateTime.Now.ToString("yyyy-MM-dd")</p>
+                    </div>
+                </div>
+
+                <!-- Passenger Info -->
+                <div class="section-title">بيانات المسافر والبرنامج</div>
+                <div class="row g-3 mb-4">
+                    <div class="col-6">
+                        <span class="info-label">اسم المسافر: </span>
+                        <span>@booking.PassengerName</span>
+                    </div>
+                    <div class="col-6">
+                        <span class="info-label">رقم جواز السفر: </span>
+                        <span>@booking.PassengerPassport</span>
+                    </div>
+                    <div class="col-6">
+                        <span class="info-label">الشريك التابع: </span>
+                        <span>شيت @booking.PartnerName</span>
+                    </div>
+                    <div class="col-6">
+                        <span class="info-label">تاريخ السفر / المغادرة: </span>
+                        <span>@booking.TravelDate.ToString("yyyy-MM-dd")</span>
+                    </div>
+                    @if (!string.IsNullOrEmpty(booking.GroupNumber))
+                    {
+                        <div class="col-6">
+                            <span class="info-label">المجموعة: </span>
+                            <span>@booking.GroupNumber</span>
+                        </div>
+                    }
+                    <div class="col-6">
+                        <span class="info-label">بوابة التأشيرة (QR): </span>
+                        <span>@(booking.HasQrCode ? "تم تخصيص كود بوابة QR" : "تأشيرة عادية بدون كود بوابة")</span>
+                    </div>
+                </div>
+
+                <!-- Costs Breakdown -->
+                <div class="section-title">تفصيل تكلفة البرنامج المصدرة للخدمات (ج.م)</div>
+                <table class="table table-bordered financial-table text-center mb-4">
+                    <thead>
+                        <tr>
+                            <th>نت المنصة (الفيزا)</th>
+                            <th>الباركود</th>
+                            <th>رسوم الشركة</th>
+                            <th>المطار</th>
+                            <th>السكن / الفندق</th>
+                            <th>تذكرة الطيران</th>
+                            <th>الباص / الانتقالات</th>
+                            <th class="table-dark">إجمالي التكلفة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>@booking.NetCost.ToString("N2")</td>
+                            <td>@booking.BarcodeCost.ToString("N2")</td>
+                            <td>@booking.CompanyCost.ToString("N2")</td>
+                            <td>@booking.AirportCost.ToString("N2")</td>
+                            <td>@booking.ProgramCost.ToString("N2")</td>
+                            <td>@booking.TicketCost.ToString("N2")</td>
+                            <td>@booking.BusCost.ToString("N2")</td>
+                            <td class="fw-bold bg-light">@booking.TotalCost.ToString("N2")</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- Financial summary -->
+                <div class="section-title">ملخص الحسابات والمدفوعات والمتبقي</div>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4 col-4">
+                        <div class="p-3 border rounded text-center">
+                            <span class="d-block text-muted small">سعر البيع الإجمالي</span>
+                            <span class="fs-5 fw-bold">@booking.SellingPrice.ToString("N2") ج.م</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-4">
+                        <div class="p-3 border rounded text-center bg-light">
+                            <span class="d-block text-muted small">إجمالي المبالغ المدفوعة</span>
+                            <span class="fs-5 fw-bold text-success">@booking.PaymentsCollected.ToString("N2") ج.م</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-4">
+                        <div class="p-3 border rounded text-center bg-light">
+                            <span class="d-block text-muted small">المبالغ المتبقية</span>
+                            <span class="fs-5 fw-bold text-danger">@booking.RemainingBalance.ToString("N2") ج.م</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payments / Installments List -->
+                <div class="section-title">سجل دفعات الأقساط المستلمة (Installments)</div>
+                <table class="table table-bordered table-striped text-center">
+                    <thead>
+                        <tr class="table-secondary">
+                            <th>كود الحركة (ID)</th>
+                            <th>رقم الدفعة / القسط</th>
+                            <th>المبلغ المستلم</th>
+                            <th>طريقة السداد</th>
+                            <th>رقم الإيصال / المرجع</th>
+                            <th>تاريخ الاستلام</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!payments.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="py-3 text-muted">لا يوجد أي أقساط أو دفعات مسجلة لهذا الحجز حالياً.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            int count = 1;
+                            foreach (var p in payments)
+                            {
+                                <tr>
+                                    <td class="font-monospace text-muted" style="font-size: 0.9rem;">@(string.IsNullOrEmpty(p.TransactionId) ? "-" : p.TransactionId)</td>
+                                    <td>الدفعة #@count</td>
+                                    <td class="fw-semibold text-success">@p.Amount.ToString("N2") ج.م</td>
+                                    <td>@p.PaymentMethod</td>
+                                    <td>@p.ReceiptNumber</td>
+                                    <td>@p.PaymentDate.ToString("yyyy-MM-dd")</td>
+                                </tr>
+                                count++;
+                            }
+                        }
+                    </tbody>
+                </table>
+
+                <div class="mt-5 text-center text-muted" style="font-size: 0.8rem;">
+                    شكراً لاختياركم خدماتنا - نهاية التقرير المالي المطبوع لملف @booking.BookingNumber
+                </div>
+            </div>
+        }
+    }
+
+    <script>
+        window.onload = function () {
+            // Automatically open print dialog
+            window.print();
+        }
+    </script>
+</body>
+</html>

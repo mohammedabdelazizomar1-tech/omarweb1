@@ -1,0 +1,87 @@
+@model IEnumerable<BusinessManagement.Application.DTOs.PeriodicReportDto>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "التقرير الدوري المالي";
+    string rangeType = ViewBag.RangeType;
+    int year = ViewBag.Year;
+}
+
+<div class="container-fluid py-4 text-right">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary pb-3">
+        <div>
+            <h4 class="text-white fw-bold m-0"><i class="bi bi-calendar3 text-info me-2"></i> التقرير الدوري والمقارنات المالية</h4>
+            <p class="text-muted small m-0">تجميع الحركات والنتائج المالية دورياً حسب اليوم، الشهر، أو السنة المالية المقارنة.</p>
+        </div>
+        <div class="d-flex gap-2 no-print">
+            <a href="/Reports/ExportPeriodicExcel?rangeType=@rangeType&year=@year" class="btn btn-outline-success btn-sm"><i class="bi bi-file-earmark-excel"></i> تصدير Excel</a>
+            <button onclick="window.print();" class="btn btn-outline-info btn-sm"><i class="bi bi-printer"></i> طباعة / PDF</button>
+            <a href="/Reports" class="btn btn-outline-secondary btn-sm">العودة</a>
+        </div>
+    </div>
+
+    <!-- Period Selection Filter -->
+    <div class="glass-card p-3 mb-4 no-print">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label text-secondary small">طبيعة تجميع الفترة</label>
+                <select name="rangeType" class="form-select">
+                    <option value="daily" selected="@(rangeType == "daily")">يومي (Daily - أخر 15 يوم)</option>
+                    <option value="monthly" selected="@(rangeType == "monthly")">شهري (Monthly - أشهر السنة الحالية)</option>
+                    <option value="annual" selected="@(rangeType == "annual")">سنوي (Annual - مقارنة السنوات)</option>
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label text-secondary small">السنة المالية المستهدفة</label>
+                <select name="year" class="form-select">
+                    <option value="2026" selected="@(year == 2026)">2026</option>
+                    <option value="2027" selected="@(year == 2027)">2027</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel"></i> تصفية</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Results Table -->
+    <div class="glass-card p-4">
+        <h6 class="text-white fw-bold mb-3 border-bottom border-secondary pb-2">سجل تجميع المقارنات المالية للفترات</h6>
+        <div class="table-responsive">
+            <table class="BusinessManagement-table text-nowrap table-hover" style="font-size: 0.85rem;">
+                <thead>
+                    <tr>
+                        <th>الفترة الزمنية</th>
+                        <th>طبيعة التجميع</th>
+                        <th class="text-end">عدد الحجوزات الصادرة</th>
+                        <th class="text-end">الإيرادات المحققة</th>
+                        <th class="text-end">المصروفات التشغيلية</th>
+                        <th class="text-end">صافي الأرباح</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">لا توجد سجلات مالية متوفرة لهذه الفترة.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var p in Model)
+                        {
+                            <tr>
+                                <td class="fw-bold text-white">@p.PeriodLabel</td>
+                                <td><span class="badge bg-secondary">@p.PeriodType</span></td>
+                                <td class="text-end font-monospace text-white">@p.BookingsCount</td>
+                                <td class="text-end font-monospace text-success">@p.Revenues.ToString("N2") ج.م</td>
+                                <td class="text-end font-monospace text-danger">@p.Expenses.ToString("N2") ج.م</td>
+                                <td class="text-end fw-bold font-monospace text-info">@p.NetProfit.ToString("N2") ج.م</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

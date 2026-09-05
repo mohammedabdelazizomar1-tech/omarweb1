@@ -1,0 +1,61 @@
+@model IEnumerable<BusinessManagement.Application.DTOs.PartnerReportDto>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "تقرير رأس مال وأرباح الشركاء";
+}
+
+<div class="container-fluid py-4 text-right">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary pb-3">
+        <div>
+            <h4 class="text-white fw-bold m-0"><i class="bi bi-shield-check text-primary me-2"></i> تقرير رأس مال وأرباح الشركاء المساهمين</h4>
+            <p class="text-muted small m-0">بيان تفصيلي برأس مال الشركاء المساهم والنسب ونسبة توزيع الأرباح الكلية لكل شريك.</p>
+        </div>
+        <div class="d-flex gap-2 no-print">
+            <a href="/Reports/ExportPartnerExcel" class="btn btn-outline-success btn-sm"><i class="bi bi-file-earmark-excel"></i> تصدير Excel</a>
+            <button onclick="window.print();" class="btn btn-outline-info btn-sm"><i class="bi bi-printer"></i> طباعة / PDF</button>
+            <a href="/Reports" class="btn btn-outline-secondary btn-sm">العودة</a>
+        </div>
+    </div>
+
+    <!-- Partner List Table -->
+    <div class="glass-card p-4">
+        <h6 class="text-white fw-bold mb-3 border-bottom border-secondary pb-2">سجل مساهمات الشركاء والكوتا المقدرة من الأرباح</h6>
+        <div class="table-responsive">
+            <table class="BusinessManagement-table text-nowrap table-hover" style="font-size: 0.85rem;">
+                <thead>
+                    <tr>
+                        <th>اسم الشريك المساهم</th>
+                        <th class="text-end">المساهمة (SAR)</th>
+                        <th class="text-end">المساهمة (EGP)</th>
+                        <th class="text-end">نسبة الحصة (Capital Share)</th>
+                        <th class="text-end">نسبة توزيع الربح المحددة</th>
+                        <th class="text-end">رصيد الأرباح المحتجزة المستحقة (تقديري)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">لا توجد سجلات مساهمات رأس مال مسجلة حالياً.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var p in Model)
+                        {
+                            <tr>
+                                <td class="fw-bold text-white">@p.ShareholderName</td>
+                                <td class="text-end font-monospace text-warning">@p.AmountSar.ToString("N2")</td>
+                                <td class="text-end font-monospace text-success">@p.AmountEgp.ToString("N2")</td>
+                                <td class="text-end font-monospace text-white">@(p.ShareRatio * 100)%</td>
+                                <td class="text-end font-monospace text-info">@(p.ProfitShareRatio * 100)%</td>
+                                <td class="text-end fw-bold font-monospace text-white">@p.EstimatedProfitQuota.ToString("N2") ج.م</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,117 @@
+@model BusinessManagement.Application.DTOs.CustomerDetailsDto
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "تسجيل عميل جديد";
+}
+
+<div class="container-fluid py-4 text-right" style="max-width: 800px;">
+    <div class="glass-card p-4 shadow-lg">
+        <div class="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary pb-3">
+            <h5 class="text-white fw-bold m-0"><i class="bi bi-person-plus-fill text-primary me-2"></i> تسجيل عميل جديد</h5>
+            <a href="/Customers" class="btn btn-outline-secondary btn-sm">إلغاء والعودة</a>
+        </div>
+
+        <form asp-action="Create" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+            <div class="row g-3">
+                <!-- Full name -->
+                <div class="col-md-6">
+                    <label asp-for="FullName" class="form-label text-secondary small">الاسم بالكامل (عربي أو إنجليزي) *</label>
+                    <input asp-for="FullName" class="form-control" placeholder="مثال: محمد احمد علي" required />
+                    <span asp-validation-for="FullName" class="text-danger small"></span>
+                </div>
+
+                <!-- Passport number -->
+                <div class="col-md-6">
+                    <label asp-for="PassportNumber" class="form-label text-secondary small">رقم جواز السفر *</label>
+                    <input asp-for="PassportNumber" class="form-control text-uppercase" placeholder="A1234567" required pattern="^[a-zA-Z]\d{7}$" title="يبدأ بحرف A ويليه 7 أرقام" />
+                    <span asp-validation-for="PassportNumber" class="text-danger small"></span>
+                </div>
+
+                <!-- Passport expiry -->
+                <div class="col-md-6">
+                    <label asp-for="PassportExpiry" class="form-label text-secondary small">تاريخ انتهاء الجواز (اختياري)</label>
+                    <input asp-for="PassportExpiry" type="date" class="form-control" />
+                    <span asp-validation-for="PassportExpiry" class="text-danger small"></span>
+                </div>
+
+                <!-- National ID -->
+                <div class="col-md-6">
+                    <label asp-for="NationalId" class="form-label text-secondary small">الرقم القومي (14 رقماً) (اختياري)</label>
+                    <input asp-for="NationalId" class="form-control" placeholder="29000000000000" pattern="^\d{14}$" title="يجب أن يتكون من 14 رقماً" />
+                    <span asp-validation-for="NationalId" class="text-danger small"></span>
+                </div>
+
+                <!-- Date of birth -->
+                <div class="col-md-6">
+                    <label asp-for="DateOfBirth" class="form-label text-secondary small">تاريخ الميلاد (اختياري)</label>
+                    <input asp-for="DateOfBirth" type="date" class="form-control" />
+                    <span asp-validation-for="DateOfBirth" class="text-danger small"></span>
+                </div>
+
+                <!-- Nationality -->
+                <div class="col-md-6">
+                    <label asp-for="Nationality" class="form-label text-secondary small">الجنسية (اختياري)</label>
+                    <input asp-for="Nationality" class="form-control" placeholder="Egyptian" />
+                    <span asp-validation-for="Nationality" class="text-danger small"></span>
+                </div>
+
+                <!-- Gender -->
+                <div class="col-md-6">
+                    <label asp-for="Gender" class="form-label text-secondary small">الجنس *</label>
+                    <select asp-for="Gender" class="form-select" required>
+                        <option value="">اختر...</option>
+                        <option value="Male">ذكر (Male)</option>
+                        <option value="Female">أنثى (Female)</option>
+                    </select>
+                    <span asp-validation-for="Gender" class="text-danger small"></span>
+                </div>
+
+                <!-- Partner / Affiliation -->
+                <div class="col-md-6">
+                    <label asp-for="PartnerId" class="form-label text-secondary small">التبعية لشيت الشريك *</label>
+                    <select asp-for="PartnerId" class="form-select" asp-items="ViewBag.Partners" required>
+                        <option value="">اختر الشريك التابع...</option>
+                    </select>
+                    <span asp-validation-for="PartnerId" class="text-danger small"></span>
+                </div>
+
+                <!-- Phone number -->
+                <div class="col-md-6">
+                    <label asp-for="PhoneNumber" class="form-label text-secondary small">رقم الهاتف</label>
+                    <input asp-for="PhoneNumber" class="form-control" placeholder="01XXXXXXXXX" />
+                    <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                </div>
+
+                <!-- Email -->
+                <div class="col-12">
+                    <label asp-for="Email" class="form-label text-secondary small">البريد الإلكتروني (اختياري)</label>
+                    <input asp-for="Email" class="form-control" placeholder="customer@domain.com" />
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div>
+
+                <!-- Address -->
+                <div class="col-12">
+                    <label asp-for="Address" class="form-label text-secondary small">العنوان</label>
+                    <input asp-for="Address" class="form-control" placeholder="العنوان بالتفصيل" />
+                    <span asp-validation-for="Address" class="text-danger small"></span>
+                </div>
+
+                <!-- Emergency Contacts -->
+                <div class="col-md-6">
+                    <label asp-for="EmergencyContactName" class="form-label text-secondary small">شخص للطوارئ</label>
+                    <input asp-for="EmergencyContactName" class="form-control" placeholder="اسم جهة الاتصال للطوارئ" />
+                    <span asp-validation-for="EmergencyContactName" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="EmergencyContactPhone" class="form-label text-secondary small">هاتف الطوارئ</label>
+                    <input asp-for="EmergencyContactPhone" class="form-control" placeholder="رقم جهة الاتصال للطوارئ" />
+                    <span asp-validation-for="EmergencyContactPhone" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 mt-4 py-2">تسجيل وحفظ بيانات العميل</button>
+        </form>
+    </div>
+</div>

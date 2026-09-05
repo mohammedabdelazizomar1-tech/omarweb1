@@ -1,0 +1,47 @@
+@model BusinessManagement.Application.DTOs.DistributeProfitDto
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "توزيع أرباح الشركاء";
+}
+
+<div class="container-fluid py-4 text-right" style="max-width: 600px;">
+    <div class="glass-card p-4 shadow-lg">
+        <div class="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary pb-3">
+            <h5 class="text-white fw-bold m-0"><i class="bi bi-gift-fill text-success me-2"></i> توزيع أرباح الشركاء المساهمين</h5>
+            <a href="/Accounting" class="btn btn-outline-secondary btn-sm">العودة للوحة الحسابات</a>
+        </div>
+
+        <div class="alert alert-info border-0 small mb-4 py-2" style="background-color: rgba(59, 130, 246, 0.1); color: #60a5fa;">
+            <i class="bi bi-info-circle me-1"></i> سيقوم النظام باحتساب نسب توزيع الأرباح تلقائياً لكل شريك بناءً على حصته النسبية في إجمالي رأس مال الشراكة المدفوع.
+        </div>
+
+        <form asp-action="DistributeProfit" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="Amount" class="form-label text-secondary small">إجمالي المبلغ المراد توزيعه (ج.م) *</label>
+                <input asp-for="Amount" type="number" step="0.01" class="form-control" placeholder="0.00" required />
+                <span asp-validation-for="Amount" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Currency" class="form-label text-secondary small">العملة المستهدفة للتوزيع</label>
+                <select asp-for="Currency" class="form-select" required>
+                    <option value="EGP">الجنيه المصري (EGP)</option>
+                    <option value="SAR">الريال السعودي (SAR)</option>
+                </select>
+                <span asp-validation-for="Currency" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label text-secondary small">وصف التوزيع / التفاصيل *</label>
+                <textarea asp-for="Description" class="form-control" rows="3" placeholder="مثال: توزيع أرباح شهر يونيو 2026 التشغيلية لحسابات الشركاء..." required></textarea>
+                <span asp-validation-for="Description" class="text-danger small"></span>
+            </div>
+
+            <button type="submit" class="btn btn-success w-100 py-2 mt-3 fw-bold" onclick="return confirm('هل أنت متأكد من ترحيل حركة توزيع الأرباح؟ سيقوم النظام بعمل قيد مزدوج بالخصم من الأرباح المحتجزة وإيداع حصة كل شريك.')">
+                <i class="bi bi-check-circle-fill me-1"></i> ترحيل وتوزيع الأرباح
+            </button>
+        </form>
+    </div>
+</div>

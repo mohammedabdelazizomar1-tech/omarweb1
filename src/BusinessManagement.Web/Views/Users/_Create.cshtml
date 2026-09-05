@@ -1,0 +1,96 @@
+@model BusinessManagement.Application.DTOs.CreateUserDto
+@using BusinessManagement.Domain.Enums
+@{
+    var departments = ViewBag.Departments as IEnumerable<BusinessManagement.Application.DTOs.DepartmentDto> ?? new List<BusinessManagement.Application.DTOs.DepartmentDto>();
+}
+
+<div class="modal fade" id="userModalElement" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content text-start" style="direction: rtl;">
+            <div class="modal-header border-bottom border-secondary border-opacity-25">
+                <h5 class="modal-title text-white fw-bold">
+                    <i class="bi bi-person-plus-fill me-2 text-primary"></i> إضافة حساب مستخدم جديد
+                </h5>
+                <button type="button" class="btn-close ms-0 me-auto" data-bs-dismiss="modal" aria-label="إغلاق" style="filter: invert(1);"></button>
+            </div>
+            <form asp-controller="Users" asp-action="Create" method="post" onsubmit="submitUserForm(event, this)">
+                @Html.AntiForgeryToken()
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="Username" class="form-label text-light fw-semibold">اسم المستخدم (Username) *</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-transparent text-secondary border-end-0"><i class="bi bi-at"></i></span>
+                                <input asp-for="Username" class="form-control border-start-0" placeholder="مثال: admin_omar" dir="ltr" />
+                            </div>
+                            <span asp-validation-for="Username" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Email" class="form-label text-light fw-semibold">البريد الإلكتروني *</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-transparent text-secondary border-end-0"><i class="bi bi-envelope"></i></span>
+                                <input asp-for="Email" type="email" class="form-control border-start-0" placeholder="user@egypttravelportal.com" dir="ltr" />
+                            </div>
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="FirstName" class="form-label text-light fw-semibold">الاسم الأول *</label>
+                            <input asp-for="FirstName" class="form-control" placeholder="مثال: محمد" />
+                            <span asp-validation-for="FirstName" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="LastName" class="form-label text-light fw-semibold">الاسم الأخير *</label>
+                            <input asp-for="LastName" class="form-control" placeholder="مثال: عبد العزيز" />
+                            <span asp-validation-for="LastName" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Password" class="form-label text-light fw-semibold">كلمة المرور *</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-transparent text-secondary border-end-0"><i class="bi bi-key"></i></span>
+                                <input asp-for="Password" type="password" id="create-password-field" class="form-control border-start-0 border-end-0" placeholder="6 أرقام/أحرف على الأقل" />
+                                <button type="button" class="btn btn-outline-secondary border-start-0" onclick="togglePasswordVisibility('create-password-field', 'create-pass-icon')">
+                                    <i class="bi bi-eye" id="create-pass-icon"></i>
+                                </button>
+                            </div>
+                            <span asp-validation-for="Password" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Role" class="form-label text-light fw-semibold">الصلاحية / الدور القيادي *</label>
+                            <select asp-for="Role" class="form-select">
+                                <option value="Admin">مدير النظام (Admin)</option>
+                                <option value="Manager">مشرف (Manager)</option>
+                                <option value="Employee">موظف (Employee)</option>
+                                <option value="Partner">شريك (Partner)</option>
+                            </select>
+                            <span asp-validation-for="Role" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label asp-for="DepartmentId" class="form-label text-light fw-semibold">القسم / الإدارة</label>
+                            <select asp-for="DepartmentId" class="form-select">
+                                <option value="">بدون قسم / كادر عام</option>
+                                @foreach (var dept in departments)
+                                {
+                                    <option value="@dept.Id">@dept.Name</option>
+                                }
+                            </select>
+                            <span asp-validation-for="DepartmentId" class="text-danger small"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-top border-secondary border-opacity-25">
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-person-check-fill me-2"></i> إنشاء وتفعيل الحساب
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

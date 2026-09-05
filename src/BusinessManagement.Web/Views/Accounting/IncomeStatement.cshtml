@@ -1,0 +1,87 @@
+@model BusinessManagement.Application.DTOs.IncomeStatementDto
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "قائمة الأرباح والخسائر";
+    string fromDate = ViewBag.FromDate;
+    string toDate = ViewBag.ToDate;
+}
+
+<div class="container-fluid py-4 text-right" style="max-width: 800px;">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary pb-3">
+        <div>
+            <h4 class="text-white fw-bold m-0"><i class="bi bi-file-earmark-spreadsheet text-primary me-2"></i> قائمة الدخل والأرباح والخسائر (Income Statement)</h4>
+            <p class="text-muted small m-0">بيان تفصيلي بصافي الدخل التشغيلي للشركة خلال فترة محاسبية محددة.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button onclick="window.print();" class="btn btn-outline-info btn-sm"><i class="bi bi-printer"></i> طباعة</button>
+            <a href="/Accounting" class="btn btn-outline-secondary btn-sm">العودة</a>
+        </div>
+    </div>
+
+    <!-- Date Range Picker -->
+    <div class="glass-card p-3 mb-4 no-print">
+        <form method="get" action="/Accounting/IncomeStatement" class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label text-secondary small">من تاريخ</label>
+                <input type="date" name="fromDate" value="@fromDate" class="form-control" />
+            </div>
+            <div class="col-md-5">
+                <label class="form-label text-secondary small">إلى تاريخ</label>
+                <input type="date" name="toDate" value="@toDate" class="form-control" />
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel-fill"></i> تصفية</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Income Statement Document -->
+    <div class="glass-card p-4 shadow">
+        <!-- Title and Logo -->
+        <div class="text-center mb-4 pb-3 border-bottom border-secondary">
+            <h5 class="text-white fw-bold">شركة خدمات الحج والعمرة والسياحة</h5>
+            <span class="text-muted small">قائمة الدخل للفترة من <strong>@fromDate</strong> إلى <strong>@toDate</strong></span>
+        </div>
+
+        <!-- 1. Revenues Section -->
+        <h6 class="text-primary fw-bold mb-3 border-bottom border-secondary pb-1">أولاً: الإيرادات التشغيلية (Revenues)</h6>
+        <div class="d-flex flex-column gap-2 mb-4">
+            @foreach (var r in Model.RevenueAccounts)
+            {
+                <div class="d-flex justify-content-between text-muted small px-3">
+                    <span>@r.Name (@r.AccountCode)</span>
+                    <span class="text-white fw-semibold">@r.CurrentBalance.ToString("N2") ج.م</span>
+                </div>
+            }
+            <div class="d-flex justify-content-between fw-bold text-success border-top border-secondary pt-2 px-3">
+                <span>إجمالي الإيرادات</span>
+                <span>@Model.TotalRevenue.ToString("N2") ج.م</span>
+            </div>
+        </div>
+
+        <!-- 2. Expenses Section -->
+        <h6 class="text-danger fw-bold mb-3 border-bottom border-secondary pb-1">ثانياً: المصروفات التشغيلية والخدمية (Expenses)</h6>
+        <div class="d-flex flex-column gap-2 mb-4">
+            @foreach (var e in Model.ExpenseAccounts)
+            {
+                <div class="d-flex justify-content-between text-muted small px-3">
+                    <span>@e.Name (@e.AccountCode)</span>
+                    <span class="text-white fw-semibold">@e.CurrentBalance.ToString("N2") ج.م</span>
+                </div>
+            }
+            <div class="d-flex justify-content-between fw-bold text-danger border-top border-secondary pt-2 px-3">
+                <span>إجمالي المصروفات</span>
+                <span>@Model.TotalExpenses.ToString("N2") ج.م</span>
+            </div>
+        </div>
+
+        <!-- 3. Net Profit / Loss -->
+        <div class="p-3 rounded text-center" style="background-color: @(Model.NetIncome >= 0 ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)"); border: 1px solid @(Model.NetIncome >= 0 ? "rgba(16, 185, 129, 0.3)" : "rgba(239, 68, 68, 0.3)");">
+            <small class="text-secondary d-block">صافي الأرباح المحققة للفترة (Net Income)</small>
+            <h3 class="fw-bold m-0 mt-1 @(Model.NetIncome >= 0 ? "text-success" : "text-danger")">
+                @Model.NetIncome.ToString("N2") ج.م
+            </h3>
+        </div>
+    </div>
+</div>

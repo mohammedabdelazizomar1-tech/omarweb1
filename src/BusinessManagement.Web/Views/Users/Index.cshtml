@@ -1,0 +1,334 @@
+@model IEnumerable<BusinessManagement.Application.DTOs.UserDto>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "إدارة الحسابات وبيانات تسجيل الدخول";
+    var departments = ViewBag.Departments as IEnumerable<BusinessManagement.Application.DTOs.DepartmentDto> ?? new List<BusinessManagement.Application.DTOs.DepartmentDto>();
+    var totalUsers = Model?.Count() ?? 0;
+    var activeUsers = Model?.Count(u => u.IsActive) ?? 0;
+    var adminUsers = Model?.Count(u => u.Role.ToString().Equals("Admin", StringComparison.OrdinalIgnoreCase)) ?? 0;
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-12 col-md-4">
+        <div class="glass-card p-3 d-flex align-items-center gap-3">
+            <div class="bg-primary bg-opacity-25 text-primary rounded-3 p-3 fs-3">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <div>
+                <span class="text-muted small d-block">إجمالي الحسابات المسجلة</span>
+                <h4 class="text-white fw-bold m-0">@totalUsers</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="glass-card p-3 d-flex align-items-center gap-3">
+            <div class="bg-success bg-opacity-25 text-success rounded-3 p-3 fs-3">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <div>
+                <span class="text-muted small d-block">الحسابات النشطة</span>
+                <h4 class="text-white fw-bold m-0">@activeUsers</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="glass-card p-3 d-flex align-items-center gap-3">
+            <div class="bg-warning bg-opacity-25 text-warning rounded-3 p-3 fs-3">
+                <i class="bi bi-shield-lock-fill"></i>
+            </div>
+            <div>
+                <span class="text-muted small d-block">مدراء النظام (Admins)</span>
+                <h4 class="text-white fw-bold m-0">@adminUsers</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tab Headers -->
+<ul class="nav nav-pills gap-2 mb-4" id="directoryTab" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="btn btn-outline-primary active px-4" id="employees-tab" data-bs-toggle="tab" data-bs-target="#employees-content" type="button" role="tab" aria-selected="true">
+            <i class="bi bi-person-badge-fill me-2"></i> قائمة حسابات تسجيل الدخول
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="btn btn-outline-primary px-4" id="departments-tab" data-bs-toggle="tab" data-bs-target="#departments-content" type="button" role="tab" aria-selected="false">
+            <i class="bi bi-diagram-3-fill me-2"></i> الأقسام والهيكل التنظيمي
+        </button>
+    </li>
+</ul>
+
+<!-- Tab Content -->
+<div class="tab-content" id="directoryTabContent">
+    
+    <!-- Tab 1: Employee Credentials Directory -->
+    <div class="tab-pane fade show active" id="employees-content" role="tabpanel" aria-labelledby="employees-tab">
+        <div class="glass-card p-4">
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+                <div>
+                    <h5 class="text-white fw-bold m-0">إدارة حسابات الدخول والمستخدمين</h5>
+                    <p class="text-muted small m-0">إضافة وتعديل بيانات تسجيل الدخول وكلمات المرور والصلاحيات</p>
+                </div>
+                
+                <div class="d-flex align-items-center gap-2">
+                    <div class="input-group" style="min-width: 250px;">
+                        <span class="input-group-text bg-transparent border-end-0 text-secondary">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" id="employeeSearch" class="form-control border-start-0 text-white" placeholder="بحث بالاسم أو البريد..." autocomplete="off" />
+                    </div>
+                    
+                    <button class="btn btn-primary text-nowrap" onclick="openCreateUserModal()">
+                        <i class="bi bi-person-plus-fill me-2"></i> إضافة حساب جديد
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="BusinessManagement-table" id="employeesTable">
+                    <thead>
+                        <tr>
+                            <th>الاسم الكامل</th>
+                            <th>اسم المستخدم (Username)</th>
+                            <th>البريد الإلكتروني</th>
+                            <th>الصلاحية / الدور</th>
+                            <th>القسم</th>
+                            <th class="text-center">الحالة</th>
+                            <th class="text-end">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model == null || !Model.Any())
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-5">لا يوجد حسابات مستخدمين مسجلة بالخادم حالياً.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var user in Model)
+                            {
+                                <tr class="employee-row">
+                                    <td class="fw-semibold text-white">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="avatar-circle bg-primary bg-opacity-25 text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 35px; height: 35px;">
+                                                @(string.IsNullOrEmpty(user.FirstName) ? "U" : user.FirstName.Substring(0, 1).ToUpper())
+                                            </div>
+                                            <span>@user.FullName</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <code class="text-info bg-dark px-2 py-1 rounded" dir="ltr">@@@user.Username</code>
+                                    </td>
+                                    <td dir="ltr" class="text-start">@user.Email</td>
+                                    <td>
+                                        <span class="badge-status secondary">@user.Role</span>
+                                    </td>
+                                    <td>@user.DepartmentName</td>
+                                    <td class="text-center">
+                                        <span class="badge-status @(user.IsActive ? "delivered" : "cancelled")">
+                                            @(user.IsActive ? "مفعل" : "معطل")
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-warning me-1" onclick="openEditUserModal('@user.Id')" data-bs-toggle="tooltip" title="تعديل بيانات الحساب وكلمة المرور">
+                                                <i class="bi bi-pencil-square me-1"></i> تعديل
+                                            </button>
+                                            
+                                            @if (User.Identity?.Name != user.Username)
+                                            {
+                                                <button class="btn btn-sm @(user.IsActive ? "btn-outline-danger" : "btn-outline-success")" onclick="toggleUserStatus('@user.Id', '@user.FullName', @(user.IsActive ? "true" : "false"))" data-bs-toggle="tooltip" title="@(user.IsActive ? "تعطيل الحساب" : "تفعيل الحساب")">
+                                                    <i class="bi @(user.IsActive ? "bi-lock-fill" : "bi-unlock-fill")"></i>
+                                                </button>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 2: Department Directory -->
+    <div class="tab-pane fade" id="departments-content" role="tabpanel" aria-labelledby="departments-tab">
+        <div class="glass-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h5 class="text-white fw-bold m-0">الأقسام والإدارات</h5>
+                    <p class="text-muted small m-0">إدارة الأقسام وتحديد تبعية حسابات الموظفين</p>
+                </div>
+                
+                <button class="btn btn-primary" onclick="openCreateDeptModal()">
+                    <i class="bi bi-diagram-3-fill me-2"></i> إضافة قسم جديد
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="BusinessManagement-table">
+                    <thead>
+                        <tr>
+                            <th>اسم القسم</th>
+                            <th>الوصف</th>
+                            <th class="text-center">عدد الأعضاء</th>
+                            <th>تاريخ الإنشاء</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!departments.Any())
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-5">لا توجد أقسام مسجلة حتى الآن.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var dept in departments)
+                            {
+                                <tr>
+                                    <td class="fw-semibold text-white">@dept.Name</td>
+                                    <td>@(string.IsNullOrWhiteSpace(dept.Description) ? "-" : dept.Description)</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-primary rounded-pill px-3 py-2 fw-semibold">
+                                            @dept.EmployeeCount عضو
+                                        </span>
+                                    </td>
+                                    <td>@dept.CreatedAt.ToString("yyyy/MM/dd")</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Container Placeholder -->
+<div id="modalContainer"></div>
+
+@section Scripts {
+    <script>
+        const userModal = new BmsModalManager("userModalElement", "modalContainer");
+
+        // Client-side live search filter
+        document.getElementById("employeeSearch")?.addEventListener("input", (e) => {
+            const query = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll(".employee-row");
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(query) ? "" : "none";
+            });
+        });
+
+        // Trigger dynamic modal form load for user creation
+        function openCreateUserModal() {
+            userModal.open("/Users/Create", "إضافة حساب مستخدم جديد");
+        }
+
+        // Trigger dynamic modal form load for user update
+        function openEditUserModal(id) {
+            userModal.open(`/Users/Edit/${id}`, "تعديل بيانات الحساب وكلمة المرور");
+        }
+
+        // Trigger department creation modal
+        function openCreateDeptModal() {
+            userModal.open("/Users/CreateDepartment", "إضافة قسم جديد");
+        }
+
+        // Show/hide password helper for dynamic modals
+        function togglePasswordVisibility(fieldId, iconId) {
+            const pwdField = document.getElementById(fieldId);
+            const pwdIcon = document.getElementById(iconId);
+            if (!pwdField) return;
+
+            if (pwdField.type === "password") {
+                pwdField.type = "text";
+                if (pwdIcon) {
+                    pwdIcon.classList.remove("bi-eye");
+                    pwdIcon.classList.add("bi-eye-slash");
+                }
+            } else {
+                pwdField.type = "password";
+                if (pwdIcon) {
+                    pwdIcon.classList.remove("bi-eye-slash");
+                    pwdIcon.classList.add("bi-eye");
+                }
+            }
+        }
+
+        // Submit form via AJAX
+        async function submitUserForm(event, form) {
+            event.preventDefault();
+
+            if (window.jQuery) {
+                const $form = window.jQuery(form);
+                if ($form.data("validator") && !$form.valid()) {
+                    return;
+                }
+            }
+
+            const formData = new FormData(form);
+            const submitBtn = form.querySelector('button[type="submit"]');
+            
+            if (submitBtn) submitBtn.disabled = true;
+
+            try {
+                const result = await bmsAjax(form.action, form.method, formData);
+                if (result.success) {
+                    bmsAlert(result.message, "success");
+                    userModal.close();
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    bmsAlert(result.message, "danger");
+                }
+            } catch (error) {
+                console.error("User form submit error:", error);
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
+            }
+        }
+
+        async function toggleUserStatus(id, name, isActive) {
+            const actionText = isActive ? "تعطيل" : "تفعيل";
+            if (window.Swal) {
+                const swalResult = await Swal.fire({
+                    title: `تأكيد ${actionText} الحساب`,
+                    text: `هل أنت متأكد من ${actionText} حساب المستخدِم '${name}'؟`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: `نعم، ${actionText}`,
+                    cancelButtonText: 'إلغاء',
+                    customClass: {
+                        popup: 'bms-swal-confirm',
+                        confirmButton: 'btn btn-warning',
+                        cancelButton: 'btn btn-outline-secondary'
+                    },
+                    buttonsStyling: false
+                });
+
+                if (!swalResult.isConfirmed) return;
+            } else {
+                if (!confirm(`هل أنت متأكد من ${actionText} حساب '${name}'؟`)) {
+                    return;
+                }
+            }
+
+            try {
+                const result = await bmsAjax(`/Users/ToggleStatus/${id}`, "POST");
+                if (result.success) {
+                    bmsAlert(result.message, "success");
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    bmsAlert(result.message, "danger");
+                }
+            } catch (error) {
+                console.error("Toggle status error:", error);
+            }
+        }
+    </script>
+}

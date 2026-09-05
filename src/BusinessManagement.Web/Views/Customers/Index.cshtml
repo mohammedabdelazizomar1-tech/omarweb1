@@ -1,0 +1,539 @@
+@model BusinessManagement.Application.DTOs.CustomerListDto
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "إدارة ملفات العملاء والمسافرين";
+
+    string currentSearch = ViewBag.Search as string ?? "";
+    Guid? currentPartnerId = ViewBag.PartnerId as Guid?;
+    string currentGender = ViewBag.Gender as string ?? "";
+    string currentNationality = ViewBag.Nationality as string ?? "";
+    string currentGroupNumber = ViewBag.GroupNumber as string ?? "";
+    string currentSortBy = ViewBag.SortBy as string ?? "createdat";
+    string currentSortOrder = ViewBag.SortOrder as string ?? "desc";
+
+    string NextSortOrder(string field) => currentSortBy == field && currentSortOrder == "asc" ? "desc" : "asc";
+    string SortIcon(string field) => currentSortBy == field ? (currentSortOrder == "asc" ? " ▴" : " ▾") : "";
+}
+
+<div class="container-fluid py-4 text-right">
+    <!-- Header Block -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <h4 class="text-white fw-bold m-0"><i class="bi bi-people-fill text-primary me-2"></i> دليل العملاء والمسافرين</h4>
+            <p class="text-muted small m-0">عرض وتعديل ملفات المسافرين، ومراجعة سجل حجوزاتهم ومستنداتهم المرفقة.</p>
+        </div>
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+            <button type="button" class="btn btn-outline-info btn-sm" onclick="document.getElementById('customerImportFile').click();">
+                <i class="bi bi-file-earmark-arrow-up me-1"></i> استيراد من Excel
+            </button>
+            <button type="button" class="btn btn-outline-warning btn-sm" onclick="document.getElementById('customerImportGroupFile').click();">
+                <i class="bi bi-people-fill me-1"></i> استيراد مجموعة من Excel
+            </button>
+            <a href="/Customers/ExportExcel?search=@currentSearch&partnerId=@currentPartnerId&gender=@currentGender&nationality=@currentNationality&groupNumber=@currentGroupNumber" class="btn btn-outline-success btn-sm">
+                <i class="bi bi-file-earmark-excel me-1"></i> تصدير Excel
+            </a>
+            <a href="/Customers/Create" class="btn btn-primary btn-sm">
+                <i class="bi bi-person-plus-fill me-1"></i> إضافة عميل جديد
+            </a>
+            <a href="/Customers/CreateGroup" class="btn btn-warning btn-sm">
+                <i class="bi bi-people-fill me-1"></i> إضافة مجموعة جديدة
+            </a>
+            
+            <form id="customerImportForm" asp-controller="Customers" asp-action="ImportExcel" method="post" enctype="multipart/form-data" style="display: inline;">
+                @Html.AntiForgeryToken()
+                <input type="file" id="customerImportFile" name="file" accept=".xlsx,.xls" onchange="submitCustomerImportForm()" style="position: absolute; left: -9999px; top: -9999px; width: 1px; height: 1px; opacity: 0;" />
+            </form>
+            <form id="customerImportGroupForm" asp-controller="Customers" asp-action="ImportGroupExcel" method="post" enctype="multipart/form-data" style="display: inline;">
+                @Html.AntiForgeryToken()
+                <input type="file" id="customerImportGroupFile" name="file" accept=".xlsx,.xls" onchange="submitCustomerImportGroupForm()" style="position: absolute; left: -9999px; top: -9999px; width: 1px; height: 1px; opacity: 0;" />
+            </form>
+        </div>
+    </div>
+
+    @if (ViewBag.SuccessMessage != null)
+    {
+        <div class="alert alert-success border-0 small mb-4 py-2" style="background-color: rgba(16, 185, 129, 0.1); color: #34d399;">
+            @ViewBag.SuccessMessage
+        </div>
+    }
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div class="alert alert-danger border-0 small mb-4 py-2" style="background-color: rgba(239, 68, 68, 0.1); color: #f87171;">
+            @ViewBag.ErrorMessage
+        </div>
+    }
+
+    <!-- Search and Advanced Filters Panel -->
+    <div class="glass-card p-3 mb-4">
+        <form method="get" action="/Customers" class="row g-3 align-items-end">
+            <div class="col-md-2">
+                <label class="form-label text-secondary small">البحث العام</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-search"></i></span>
+                    <input type="text" name="search" class="form-control" value="@currentSearch" placeholder="الاسم، الجواز، المجموعة..." />
+                </div>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label text-secondary small">رقم المجموعة</label>
+                <select name="groupNumber" class="form-select">
+                    <option value="">الكل</option>
+                    @if (currentGroupNumber == "-")
+                    {
+                        <option value="-" selected>شرطة (-) ليس في مجموعة</option>
+                    }
+                    else
+                    {
+                        <option value="-">شرطة (-) ليس في مجموعة</option>
+                    }
+                    
+                    @if (ViewBag.GroupNumbers is IEnumerable<string> groupNumbersList)
+                    {
+                        foreach (var g in groupNumbersList)
+                        {
+                            if (currentGroupNumber == g)
+                            {
+                                <option value="@g" selected>@g</option>
+                            }
+                            else
+                            {
+                                <option value="@g">@g</option>
+                            }
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label text-secondary small">التبعية لشيت الشريك</label>
+                <select name="partnerId" class="form-select" asp-items="ViewBag.Partners">
+                    <option value="">الكل (بدون شريك)</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label class="form-label text-secondary small">الجنس</label>
+                <select name="gender" class="form-select">
+                    <option value="">الكل</option>
+                    @if (currentGender == "Male")
+                    {
+                        <option value="Male" selected>ذكر</option>
+                        <option value="Female">أنثى</option>
+                    }
+                    else if (currentGender == "Female")
+                    {
+                        <option value="Male">ذكر</option>
+                        <option value="Female" selected>أنثى</option>
+                    }
+                    else
+                    {
+                        <option value="Male">ذكر</option>
+                        <option value="Female">أنثى</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label text-secondary small">الجنسية</label>
+                <select name="nationality" class="form-select">
+                    <option value="">الكل</option>
+                    @if (currentNationality == "Egyptian")
+                    {
+                        <option value="Egyptian" selected>مصري</option>
+                        <option value="Saudi">سعودي</option>
+                    }
+                    else if (currentNationality == "Saudi")
+                    {
+                        <option value="Egyptian">مصري</option>
+                        <option value="Saudi" selected>سعودي</option>
+                    }
+                    else
+                    {
+                        <option value="Egyptian">مصري</option>
+                        <option value="Saudi">سعودي</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel-fill me-1"></i> تصفية</button>
+                <a href="/Customers" class="btn btn-outline-secondary w-50">إعادة</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Paged Listing Table -->
+    <div class="glass-card p-4">
+        <div class="table-responsive">
+            <table class="BusinessManagement-table text-nowrap table-hover" style="font-size: 0.85rem;">
+                <thead class="bg-light">
+                    <tr>
+                        <th>رقم المجموعة</th>
+                        <th>
+                            <a href="/Customers?search=@currentSearch&partnerId=@currentPartnerId&gender=@currentGender&nationality=@currentNationality&groupNumber=@currentGroupNumber&sortBy=name&sortOrder=@NextSortOrder("name")" class="text-secondary text-decoration-none fw-bold">
+                                الاسم بالكامل @SortIcon("name")
+                            </a>
+                        </th>
+                        <th>التبعية (الشريك)</th>
+                        <th>
+                            <a href="/Customers?search=@currentSearch&partnerId=@currentPartnerId&gender=@currentGender&nationality=@currentNationality&groupNumber=@currentGroupNumber&sortBy=passport&sortOrder=@NextSortOrder("passport")" class="text-secondary text-decoration-none fw-bold">
+                                رقم الجواز @SortIcon("passport")
+                            </a>
+                        </th>
+                        <th>الرقم القومي</th>
+                        <th>
+                            <a href="/Customers?search=@currentSearch&partnerId=@currentPartnerId&gender=@currentGender&nationality=@currentNationality&groupNumber=@currentGroupNumber&sortBy=nationality&sortOrder=@NextSortOrder("nationality")" class="text-secondary text-decoration-none fw-bold">
+                                الجنسية @SortIcon("nationality")
+                            </a>
+                        </th>
+                        <th>
+                            <a href="/Customers?search=@currentSearch&partnerId=@currentPartnerId&gender=@currentGender&nationality=@currentNationality&groupNumber=@currentGroupNumber&sortBy=gender&sortOrder=@NextSortOrder("gender")" class="text-secondary text-decoration-none fw-bold">
+                                الجنس @SortIcon("gender")
+                            </a>
+                        </th>
+                        <th>رقم الهاتف</th>
+                        <th>البريد الإلكتروني</th>
+                        <th>
+                            <a href="/Customers?search=@currentSearch&partnerId=@currentPartnerId&gender=@currentGender&nationality=@currentNationality&groupNumber=@currentGroupNumber&sortBy=createdat&sortOrder=@NextSortOrder("createdat")" class="text-secondary text-decoration-none fw-bold">
+                                تاريخ الإضافة @SortIcon("createdat")
+                            </a>
+                        </th>
+                        <th class="text-end">الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Customers == null || !Model.Customers.Any())
+                    {
+                        <tr>
+                            <td colspan="11" class="text-center text-muted py-4">لا توجد نتائج مطابقة لبحثك حالياً.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var c in Model.Customers)
+                        {
+                            <tr>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(c.GroupNumber))
+                                    {
+                                        <span class="badge bg-warning bg-opacity-10 text-warning">@c.GroupNumber</span>
+                                    }
+                                    else
+                                    {
+                                        <span>-</span>
+                                    }
+                                </td>
+                                <td class="fw-bold text-white">@c.FullName</td>
+                                <td>
+                                    @if (c.PartnerId.HasValue)
+                                    {
+                                        <span class="badge bg-info bg-opacity-10 text-info">@c.PartnerName</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary bg-opacity-10 text-muted">عميل مباشر</span>
+                                    }
+                                </td>
+                                <td class="fw-semibold"><code>@c.PassportNumber</code></td>
+                                <td class="text-muted">@c.NationalId</td>
+                                <td>@c.Nationality</td>
+                                <td>
+                                    @if (c.Gender == "Male")
+                                    {
+                                        <span class="badge bg-primary bg-opacity-10 text-primary">ذكر</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger bg-opacity-10 text-danger">أنثى</span>
+                                    }
+                                </td>
+                                <td class="text-white">@c.PhoneNumber</td>
+                                <td class="text-muted">@c.Email</td>
+                                <td class="text-muted">@c.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd")</td>
+                                <td class="text-end">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <a href="/Customers/Details/@c.Id" class="btn btn-sm btn-outline-primary" title="التفاصيل والمرفقات">
+                                            <i class="bi bi-eye-fill"></i>
+                                        </a>
+                                        <a href="/Customers/Edit/@c.Id" class="btn btn-sm btn-outline-secondary" title="تعديل">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                        <form asp-action="Delete" method="post" style="display:inline;" onsubmit="return confirm('هل أنت متأكد من حذف هذا العميل نهائياً من الدليل؟')">
+                                            <input type="hidden" name="id" value="@c.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="حذف">
+                                                <i class="bi bi-trash-fill"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        @if (Model.TotalPages > 1)
+        {
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 mt-4 border-top border-secondary pt-3">
+                <span class="text-muted small">عرض الصفحة @Model.PageIndex من إجمالي @Model.TotalPages (عدد العملاء: @Model.TotalCount)</span>
+                
+                <nav>
+                    <ul class="pagination pagination-sm m-0">
+                        <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                            <a class="page-link" href="/Customers?search=@currentSearch&partnerId=@currentPartnerId&gender=@currentGender&nationality=@currentNationality&groupNumber=@currentGroupNumber&sortBy=@currentSortBy&sortOrder=@currentSortOrder&page=@(Model.PageIndex - 1)">السابق</a>
+                        </li>
+                        @for (int i = 1; i <= Model.TotalPages; i++)
+                        {
+                            <li class="page-item @(Model.PageIndex == i ? "active" : "")">
+                                <a class="page-link" href="/Customers?search=@currentSearch&partnerId=@currentPartnerId&gender=@currentGender&nationality=@currentNationality&groupNumber=@currentGroupNumber&sortBy=@currentSortBy&sortOrder=@currentSortOrder&page=@i">@i</a>
+                            </li>
+                        }
+                        <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                            <a class="page-link" href="/Customers?search=@currentSearch&partnerId=@currentPartnerId&gender=@currentGender&nationality=@currentNationality&groupNumber=@currentGroupNumber&sortBy=@currentSortBy&sortOrder=@currentSortOrder&page=@(Model.PageIndex + 1)">التالي</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script nonce="@Context.Items["ScriptNonce"]">
+        function submitCustomerImportForm() {
+            const form = document.getElementById('customerImportForm');
+            const fileInput = document.getElementById('customerImportFile');
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const formData = new FormData(form);
+            formData.set('file', file);
+
+            if (window.Swal) {
+                Swal.fire({
+                    title: 'جاري استيراد البيانات...',
+                    text: 'يرجى الانتظار بينما نقوم بمعالجة ملف الإكسيل.',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+            }
+
+            BusinessManagementAjax('@Url.Action("ImportExcel", "Customers")', 'POST', formData)
+                .then(result => {
+                    if (window.Swal) {
+                        Swal.close();
+                    }
+                    if (result.success) {
+                        let msg = result.message;
+                        if (result.importErrors && result.importErrors.length > 0) {
+                            msg += "\n\nالأخطاء بالتفصيل:\n";
+                            result.importErrors.forEach(err => {
+                                msg += `السطر ${err.rowIndex}: ${err.message}\n`;
+                            });
+                        }
+                        
+                        if (window.Swal) {
+                            Swal.fire({
+                                title: 'تمت العملية',
+                                html: msg.replace(/\n/g, '<br>'),
+                                icon: result.importErrors && result.importErrors.length > 0 ? 'warning' : 'success',
+                                confirmButtonText: 'حسناً'
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            alert(msg);
+                            location.reload();
+                        }
+                    } else {
+                        if (window.Swal) {
+                            Swal.fire({
+                                title: 'فشل الاستيراد',
+                                text: result.message,
+                                icon: 'error',
+                                confirmButtonText: 'حسناً'
+                            });
+                        } else {
+                            alert(result.message);
+                        }
+                    }
+                })
+                .catch(error => {
+                    if (window.Swal) {
+                        Swal.close();
+                    }
+                    console.error('Customer import error:', error);
+                    if (window.Swal) {
+                        Swal.fire({
+                            title: 'خطأ',
+                            text: 'فشل استيراد بيانات العملاء من ملف Excel.',
+                            icon: 'error',
+                            confirmButtonText: 'حسناً'
+                        });
+                    } else {
+                        alert('فشل استيراد بيانات العملاء من ملف Excel.');
+                    }
+                });
+        }
+
+        function submitCustomerImportGroupForm() {
+            const form = document.getElementById('customerImportGroupForm');
+            const fileInput = document.getElementById('customerImportGroupFile');
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const formData = new FormData(form);
+            formData.set('file', file);
+
+            if (window.Swal) {
+                Swal.fire({
+                    title: 'جاري استيراد المجموعة...',
+                    text: 'يرجى الانتظار بينما نقوم بمعالجة ملف الإكسيل للمجموعة.',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+            }
+
+            BusinessManagementAjax('@Url.Action("ImportGroupExcel", "Customers")', 'POST', formData)
+                .then(result => {
+                    if (window.Swal) {
+                        Swal.close();
+                    }
+                    if (result.success) {
+                        let msg = result.message;
+                        if (result.importErrors && result.importErrors.length > 0) {
+                            msg += "\n\nالأخطاء بالتفصيل:\n";
+                            result.importErrors.forEach(err => {
+                                msg += `السطر ${err.rowIndex}: ${err.message}\n`;
+                            });
+                        }
+                        
+                        if (window.Swal) {
+                            Swal.fire({
+                                title: 'تمت العملية',
+                                html: msg.replace(/\n/g, '<br>'),
+                                icon: result.importErrors && result.importErrors.length > 0 ? 'warning' : 'success',
+                                confirmButtonText: 'حسناً'
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            alert(msg);
+                            location.reload();
+                        }
+                    } else {
+                        if (window.Swal) {
+                            Swal.fire({
+                                title: 'فشل الاستيراد',
+                                text: result.message,
+                                icon: 'error',
+                                confirmButtonText: 'حسناً'
+                            });
+                        } else {
+                            alert(result.message);
+                        }
+                    }
+                })
+                .catch(error => {
+                    if (window.Swal) {
+                        Swal.close();
+                    }
+                    console.error('Customer group import error:', error);
+                    if (window.Swal) {
+                        Swal.fire({
+                            title: 'خطأ',
+                            text: 'فشل استيراد مجموعة العملاء من ملف Excel.',
+                            icon: 'error',
+                            confirmButtonText: 'حسناً'
+                        });
+                    } else {
+                        alert('فشل استيراد مجموعة العملاء من ملف Excel.');
+                    }
+                });
+        }
+
+        function submitCustomerImportGroupForm() {
+            const form = document.getElementById('customerImportGroupForm');
+            const fileInput = document.getElementById('customerImportGroupFile');
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const formData = new FormData(form);
+            formData.set('file', file);
+
+            if (window.Swal) {
+                Swal.fire({
+                    title: 'جاري استيراد المجموعة...',
+                    text: 'يرجى الانتظار بينما نقوم بمعالجة ملف الإكسيل للمجموعة.',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+            }
+
+            BusinessManagementAjax('@Url.Action("ImportGroupExcel", "Customers")', 'POST', formData)
+                .then(result => {
+                    if (window.Swal) {
+                        Swal.close();
+                    }
+                    if (result.success) {
+                        let msg = result.message;
+                        if (result.importErrors && result.importErrors.length > 0) {
+                            msg += "\n\nالأخطاء بالتفصيل:\n";
+                            result.importErrors.forEach(err => {
+                                msg += `السطر ${err.rowIndex}: ${err.message}\n`;
+                            });
+                        }
+                        
+                        if (window.Swal) {
+                            Swal.fire({
+                                title: 'تمت العملية',
+                                html: msg.replace(/\n/g, '<br>'),
+                                icon: result.importErrors && result.importErrors.length > 0 ? 'warning' : 'success',
+                                confirmButtonText: 'حسناً'
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            alert(msg);
+                            location.reload();
+                        }
+                    } else {
+                        if (window.Swal) {
+                            Swal.fire({
+                                title: 'فشل الاستيراد',
+                                text: result.message,
+                                icon: 'error',
+                                confirmButtonText: 'حسناً'
+                            });
+                        } else {
+                            alert(result.message);
+                        }
+                    }
+                })
+                .catch(error => {
+                    if (window.Swal) {
+                        Swal.close();
+                    }
+                    console.error('Customer group import error:', error);
+                    if (window.Swal) {
+                        Swal.fire({
+                            title: 'خطأ',
+                            text: 'فشل استيراد مجموعة العملاء من ملف Excel.',
+                            icon: 'error',
+                            confirmButtonText: 'حسناً'
+                        });
+                    } else {
+                        alert('فشل استيراد مجموعة العملاء من ملف Excel.');
+                    }
+                });
+        }
+    </script>
+}

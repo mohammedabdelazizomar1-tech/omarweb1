@@ -1,0 +1,413 @@
+@model BusinessManagement.Application.DTOs.TravelDashboardDto
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "لوحة التحكم الرئيسية";
+}
+
+<div class="container-fluid py-4 text-right">
+    <!-- Quick Overview Stats -->
+    <div class="row g-3 mb-4">
+        <!-- 1. Revenue / Sales -->
+        <div class="col-md-6 col-lg-3">
+            <div class="glass-card p-3 border-start border-primary border-4 h-100 d-flex flex-column justify-content-between position-relative overflow-hidden">
+                <div>
+                    <span class="text-secondary small d-block">إجمالي المبيعات المفوترة</span>
+                    <h4 class="text-white fw-bold m-0 mt-1">@Model.TotalSalesInvoiced.ToString("N2") ج.م</h4>
+                </div>
+                <div class="mt-2 text-muted small">
+                    منها محصل: <strong class="text-success">@Model.TotalPaymentsCollected.ToString("N2")</strong>
+                </div>
+                <i class="bi bi-wallet2 text-primary opacity-10 fs-1 position-absolute" style="left: 15px; bottom: 10px;"></i>
+            </div>
+        </div>
+
+        <!-- 2. Expenses -->
+        <div class="col-md-6 col-lg-3">
+            <div class="glass-card p-3 border-start border-danger border-4 h-100 d-flex flex-column justify-content-between position-relative overflow-hidden">
+                <div>
+                    <span class="text-secondary small d-block">إجمالي التكاليف والمصروفات</span>
+                    <h4 class="text-white fw-bold m-0 mt-1">@Model.TotalExpenses.ToString("N2") ج.م</h4>
+                </div>
+                <div class="mt-2 text-muted small">
+                    تشمل حجز طيران وسكن وتأشيرات
+                </div>
+                <i class="bi bi-dash-circle text-danger opacity-10 fs-1 position-absolute" style="left: 15px; bottom: 10px;"></i>
+            </div>
+        </div>
+
+        <!-- 3. Net Profit -->
+        <div class="col-md-6 col-lg-3">
+            <div class="glass-card p-3 border-start border-success border-4 h-100 d-flex flex-column justify-content-between position-relative overflow-hidden">
+                <div>
+                    <span class="text-secondary small d-block">صافي الأرباح المحققة</span>
+                    <h4 class="text-success fw-bold m-0 mt-1">@Model.TotalAccumulatedProfit.ToString("N2") ج.م</h4>
+                </div>
+                <div class="mt-2 text-muted small">
+                    المتبقي للتحصيل: <strong class="text-warning">@Model.TotalRemainingReceivable.ToString("N2")</strong>
+                </div>
+                <i class="bi bi-graph-up-arrow text-success opacity-10 fs-1 position-absolute" style="left: 15px; bottom: 10px;"></i>
+            </div>
+        </div>
+
+        <!-- 4. Safe Balance (Dual Currency) -->
+        <div class="col-md-6 col-lg-3">
+            <div class="glass-card p-3 border-start border-warning border-4 h-100 d-flex flex-column justify-content-between position-relative overflow-hidden">
+                <div>
+                    <span class="text-secondary small d-block">أرصدة صناديق النقدية الكاش</span>
+                    <h5 class="text-white fw-semibold m-0 mt-1">EGP: @Model.SafeBalanceEgp.ToString("N2")</h5>
+                    <h5 class="text-warning fw-semibold m-0">SAR: @Model.SafeBalanceSar.ToString("N2")</h5>
+                </div>
+                <i class="bi bi-cash-stack text-warning opacity-10 fs-1 position-absolute" style="left: 15px; bottom: 10px;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking and Gateways Counters -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="glass-card p-3 text-center">
+                <small class="text-secondary d-block">عدد الحجوزات</small>
+                <h4 class="text-white fw-bold m-0 mt-1">@Model.TotalBookingsCount</h4>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="glass-card p-3 text-center">
+                <small class="text-secondary d-block">المسافرين المسجلين</small>
+                <h4 class="text-white fw-bold m-0 mt-1">@Model.TotalPassengersCount</h4>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="glass-card p-3 text-center">
+                <small class="text-secondary d-block">الفيزا الخارجية</small>
+                <h4 class="text-white fw-bold m-0 mt-1">@Model.TotalExternalVisasCount</h4>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="glass-card p-3 text-center">
+                <small class="text-secondary d-block">باركود البوابات النشطة</small>
+                <h4 class="text-white fw-bold m-0 mt-1">@Model.ActiveGatewaysCount</h4>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts & Analytics Section -->
+    <div class="row g-4 mb-4">
+        <!-- 1. Revenue & Profit Timeline -->
+        <div class="col-lg-8">
+            <div class="glass-card p-4">
+                <h6 class="text-white fw-bold mb-3"><i class="bi bi-bar-chart-line text-primary me-2"></i> تحليل الإيرادات وصافي الأرباح شهرياً</h6>
+                <div style="height: 300px;">
+                    <canvas id="dashboardFinancialChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Visa slots indicators -->
+        <div class="col-lg-4">
+            <div class="glass-card p-4 h-100 d-flex flex-column justify-content-between">
+                <h6 class="text-white fw-bold mb-3"><i class="bi bi-passport text-info me-2"></i> بوابات التأشيرات والسلفت</h6>
+                
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between text-muted small mb-1">
+                        <span>باركود أفراد (B2C) متاح</span>
+                        <span class="text-success fw-bold">@Model.AvailableQrCodes كود</span>
+                    </div>
+                    <div class="progress" style="height: 8px; background-color: rgba(255,255,255,0.05);">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: @(Model.AvailableQrCodes > 0 ? 75 : 10)%;"></div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between text-muted small mb-1">
+                        <span>حصص VIP سلفت متوفرة</span>
+                        <span class="text-warning fw-bold">@Model.AvailableVipSlots مقعد</span>
+                    </div>
+                    <div class="progress" style="height: 8px; background-color: rgba(255,255,255,0.05);">
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: @(Model.AvailableVipSlots > 0 ? 60 : 10)%;"></div>
+                    </div>
+                </div>
+
+                <div class="p-3 rounded text-center" style="background-color: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.1);">
+                    <small class="text-muted d-block">إجمالي المبالغ المعلقة غير المحصلة</small>
+                    <h5 class="text-warning fw-bold m-0 mt-1">@Model.TotalRemainingReceivable.ToString("N2") ج.م</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Section: Expenses details & Barcode Linkage -->
+    <div class="row g-4 mb-4">
+        <!-- 1. Detailed Expenses Breakdown -->
+        <div class="col-lg-6">
+            <div class="glass-card p-4 h-100">
+                <h6 class="text-white fw-bold mb-3"><i class="bi bi-pie-chart text-danger me-2"></i> تفاصيل تكاليف ومصروفات الحجوزات والتأشيرات</h6>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between text-muted small mb-1">
+                        <span>تكاليف البوابات والمنصات (Portal/Gateway)</span>
+                        <span class="text-white fw-bold">@Model.GatewayExpenses.ToString("N2") ج.م</span>
+                    </div>
+                    <div class="progress" style="height: 6px; background-color: rgba(255,255,255,0.05);">
+                        <div class="progress-bar bg-danger" role="progressbar" style="width: @(Model.TotalExpenses > 0 ? (Model.GatewayExpenses / Model.TotalExpenses * 100) : 0)%;"></div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between text-muted small mb-1">
+                        <span>تكاليف وعمولات الوكلاء والاتفاقيات (Agency/Broker)</span>
+                        <span class="text-white fw-bold">@Model.AgencyExpenses.ToString("N2") ج.م</span>
+                    </div>
+                    <div class="progress" style="height: 6px; background-color: rgba(255,255,255,0.05);">
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: @(Model.TotalExpenses > 0 ? (Model.AgencyExpenses / Model.TotalExpenses * 100) : 0)%;"></div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between text-muted small mb-1">
+                        <span>حجز وتذاكر الطيران (Aviation/Flights)</span>
+                        <span class="text-white fw-bold">@Model.AviationExpenses.ToString("N2") ج.م</span>
+                    </div>
+                    <div class="progress" style="height: 6px; background-color: rgba(255,255,255,0.05);">
+                        <div class="progress-bar bg-info" role="progressbar" style="width: @(Model.TotalExpenses > 0 ? (Model.AviationExpenses / Model.TotalExpenses * 100) : 0)%;"></div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between text-muted small mb-1">
+                        <span>مصاريف أخرى (فنادق، انتقالات، مطارات)</span>
+                        <span class="text-white fw-bold">@Model.OtherExpenses.ToString("N2") ج.م</span>
+                    </div>
+                    <div class="progress" style="height: 6px; background-color: rgba(255,255,255,0.05);">
+                        <div class="progress-bar bg-secondary" role="progressbar" style="width: @(Model.TotalExpenses > 0 ? (Model.OtherExpenses / Model.TotalExpenses * 100) : 0)%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Barcode Stock & Cost Linkage -->
+        <div class="col-lg-6">
+            <div class="glass-card p-4 h-100">
+                <h6 class="text-white fw-bold mb-3"><i class="bi bi-qr-code text-primary me-2"></i> ربط الباركود بحركات بوابات الدفع والمنصات</h6>
+                
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="p-3 rounded text-center" style="background-color: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.1);">
+                            <small class="text-muted d-block">المنفق لشراء أكواد البوابة</small>
+                            <h5 class="text-primary fw-bold m-0 mt-1">@Model.GatewayBarcodeSpent.ToString("N2") ج.م</h5>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 rounded text-center" style="background-color: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.1);">
+                            <small class="text-muted d-block">المحمل على الحجوزات كأكواد</small>
+                            <h5 class="text-success fw-bold m-0 mt-1">@Model.BookingsBarcodeAllocated.ToString("N2") ج.م</h5>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 p-3 rounded" style="background-color: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">صافي فرق تسعير الباركود (الربح الإضافي)</span>
+                        <h6 class="@((Model.BookingsBarcodeAllocated - Model.GatewayBarcodeSpent) >= 0 ? "text-success" : "text-danger") fw-bold m-0">
+                            @((Model.BookingsBarcodeAllocated - Model.GatewayBarcodeSpent).ToString("N2")) ج.م
+                        </h6>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Section: Shareholder / Partner Ledgers -->
+    <div class="glass-card p-4 mb-4">
+        <h6 class="text-white fw-bold mb-3"><i class="bi bi-people-fill text-warning me-2"></i> أرصدة وحسابات الشركاء والمساهمين</h6>
+        <div class="table-responsive">
+            <table class="BusinessManagement-table text-nowrap table-hover" style="font-size: 0.85rem;">
+                <thead>
+                    <tr>
+                        <th>اسم الشريك</th>
+                        <th class="text-center">عدد العملاء</th>
+                        <th class="text-center">بQR</th>
+                        <th class="text-center">بدون QR</th>
+                        <th class="text-end">الحساب الكلي</th>
+                        <th class="text-end">المدفوع</th>
+                        <th class="text-end">المتبقي</th>
+                        <th class="text-end">الأرباح</th>
+                        <th class="text-end">المعدل</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.PartnerLedgers == null || !Model.PartnerLedgers.Any())
+                    {
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-4">لا توجد بيانات شركاء مسجلة حالياً.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var l in Model.PartnerLedgers)
+                        {
+                            <tr>
+                                <td class="fw-bold text-white">@l.PartnerName</td>
+                                <td class="text-center text-white">@l.ClientsCount</td>
+                                <td class="text-center text-success">@l.QrCount</td>
+                                <td class="text-center text-muted">@l.NonQrCount</td>
+                                <td class="text-end text-info font-monospace">@l.TotalAccount.ToString("N2") ج.م</td>
+                                <td class="text-end text-success font-monospace">@l.PaidAmount.ToString("N2") ج.م</td>
+                                <td class="text-end text-warning font-monospace">@l.RemainingBalance.ToString("N2") ج.م</td>
+                                <td class="text-end text-success font-monospace fw-bold">@l.BookingsProfit.ToString("N2") ج.م</td>
+                                <td class="text-end text-white font-monospace">@l.AverageProfitPerClient.ToString("N2") ج.م</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Feed Logs & Bookings Grid -->
+    <div class="row g-4">
+        <!-- Recent travel files -->
+        <div class="col-lg-7">
+            <div class="glass-card p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="text-white fw-bold m-0"><i class="bi bi-airplane text-success me-2"></i> أحدث ملفات حجز المسافرين</h6>
+                    <a href="/Bookings" class="btn btn-outline-secondary btn-sm" style="font-size: 0.75rem;">مشاهدة الكل</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="BusinessManagement-table text-nowrap table-hover" style="font-size: 0.8rem;">
+                        <thead>
+                            <tr>
+                                <th>اسم المسافر</th>
+                                <th>الشريك المسؤول</th>
+                                <th>سعر البيع</th>
+                                <th>تاريخ السفر</th>
+                                <th>الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.RecentBookings.Any())
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">لا توجد حجزات مسجلة مؤخراً.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                foreach (var b in Model.RecentBookings)
+                                {
+                                    <tr>
+                                        <td class="fw-bold text-white">@b.PassengerName</td>
+                                        <td>@b.PartnerName</td>
+                                        <td class="text-success font-monospace">@b.SellingPrice.ToString("N2") ج.م</td>
+                                        <td class="text-muted">@b.TravelDate.ToString("yyyy-MM-dd")</td>
+                                        <td>
+                                            <span class="badge @(b.Status == "Confirmed" ? "bg-success" : "bg-secondary")">@b.Status</span>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity Security Logs -->
+        <div class="col-lg-5">
+            <div class="glass-card p-4 h-100">
+                <h6 class="text-white fw-bold mb-3"><i class="bi bi-clock-history text-warning me-2"></i> سجل العمليات وحركة الأمان الأخيرة</h6>
+                <div class="d-flex flex-column gap-3" style="max-height: 320px; overflow-y: auto;">
+                    @if (!Model.RecentActivities.Any())
+                    {
+                        <div class="text-center text-muted py-4 small">لا توجد أنشطة مسجلة بالنظام حالياً.</div>
+                    }
+                    else
+                    {
+                        foreach (var a in Model.RecentActivities)
+                        {
+                            <div class="p-2 rounded border border-secondary border-opacity-10" style="background-color: rgba(255,255,255,0.01);">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="text-white fw-semibold small">@a.UserId</span>
+                                    <small class="text-muted" style="font-size: 0.7rem;">@a.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd hh:mm tt")</small>
+                                </div>
+                                <p class="text-muted small m-0 text-wrap">@a.Action</p>
+                                <small class="text-secondary font-monospace" style="font-size: 0.65rem;">IP: @a.IpAddress</small>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const ctx = document.getElementById("dashboardFinancialChart").getContext("2d");
+            
+            const labels = [];
+            const revenueData = [];
+            const profitData = [];
+            
+            @foreach (var l in Model.MonthlyRevenueLabels)
+            {
+                <text>labels.push("@l");</text>
+            }
+            @foreach (var v in Model.MonthlyRevenueData)
+            {
+                <text>revenueData.push(@v);</text>
+            }
+            @foreach (var p in Model.MonthlyProfitData)
+            {
+                <text>profitData.push(@p);</text>
+            }
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'إجمالي المبيعات (Revenue)',
+                            data: revenueData,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.05)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'صافي الربح (Net Profit)',
+                            data: profitData,
+                            borderColor: '#10b981',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#9ca3af', font: { family: 'Cairo' } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#9ca3af', font: { family: 'Cairo' } }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: '#f3f4f6', font: { family: 'Cairo' } }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+}

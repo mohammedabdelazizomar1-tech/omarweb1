@@ -1,0 +1,108 @@
+@model BusinessManagement.Application.DTOs.BookingReportDto
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "تقرير الحجوزات والرحلات";
+    string fromDate = ViewBag.FromDate;
+    string toDate = ViewBag.ToDate;
+}
+
+<div class="container-fluid py-4 text-right">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary pb-3">
+        <div>
+            <h4 class="text-white fw-bold m-0"><i class="bi bi-journal-bookmark-fill text-success me-2"></i> تقرير الحجوزات والمبيعات</h4>
+            <p class="text-muted small m-0">تحليل الحجوزات التشغيلية، إجمالي قيمة المبيعات، وهوامش الربح المحققة من البرامج.</p>
+        </div>
+        <div class="d-flex gap-2 no-print">
+            <a href="/Reports/ExportBookingExcel?fromDate=@fromDate&toDate=@toDate" class="btn btn-outline-success btn-sm"><i class="bi bi-file-earmark-excel"></i> تصدير Excel</a>
+            <button onclick="window.print();" class="btn btn-outline-info btn-sm"><i class="bi bi-printer"></i> طباعة / PDF</button>
+            <a href="/Reports" class="btn btn-outline-secondary btn-sm">العودة</a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="glass-card p-3 mb-4 no-print">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label text-secondary small">من تاريخ السفر</label>
+                <input type="date" name="fromDate" value="@fromDate" class="form-control" />
+            </div>
+            <div class="col-md-5">
+                <label class="form-label text-secondary small">إلى تاريخ السفر</label>
+                <input type="date" name="toDate" value="@toDate" class="form-control" />
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel"></i> تصفية</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="glass-card p-3 border-start border-primary border-4">
+                <small class="text-muted">إجمالي الحجوزات</small>
+                <h3 class="text-white fw-bold m-0 mt-1">@Model.TotalBookingsCount</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="glass-card p-3 border-start border-success border-4">
+                <small class="text-muted">قيمة سعر البيع الإجمالي</small>
+                <h3 class="text-success fw-bold m-0 mt-1">@Model.TotalSellingPrice.ToString("N2") ج.م</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="glass-card p-3 border-start border-danger border-4">
+                <small class="text-muted">تكلفة الحجوزات الكلية</small>
+                <h3 class="text-danger fw-bold m-0 mt-1">@Model.TotalCost.ToString("N2") ج.م</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="glass-card p-3 border-start border-info border-4" style="background-color: rgba(59, 130, 246, 0.05);">
+                <small class="text-muted">صافي الربح الدفتري</small>
+                <h3 class="text-info fw-bold m-0 mt-1">@Model.TotalNetProfit.ToString("N2") ج.م</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bookings Ledger Table -->
+    <div class="glass-card p-4">
+        <h6 class="text-white fw-bold mb-3 border-bottom border-secondary pb-2">بيان تفصيلي بملفات الحجوزات والربحية</h6>
+        <div class="table-responsive">
+            <table class="BusinessManagement-table text-nowrap table-hover" style="font-size: 0.85rem;">
+                <thead>
+                    <tr>
+                        <th>اسم المسافر</th>
+                        <th>الشريك المسؤول</th>
+                        <th>تاريخ السفر</th>
+                        <th class="text-end">سعر البيع</th>
+                        <th class="text-end">التكلفة</th>
+                        <th class="text-end">صافي الربح</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.DetailedBookings.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">لا توجد حجوزات تفي بشروط التصفية المحددة.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var b in Model.DetailedBookings)
+                        {
+                            <tr>
+                                <td class="fw-bold text-white">@b.PassengerName</td>
+                                <td><span class="badge bg-secondary">@b.PartnerName</span></td>
+                                <td class="text-muted">@b.TravelDate.ToString("yyyy-MM-dd")</td>
+                                <td class="text-end text-success font-monospace">@b.SellingPrice.ToString("N2") ج.م</td>
+                                <td class="text-end text-danger font-monospace">@b.NetCost.ToString("N2") ج.م</td>
+                                <td class="text-end fw-bold text-info font-monospace">@b.Profit.ToString("N2") ج.م</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

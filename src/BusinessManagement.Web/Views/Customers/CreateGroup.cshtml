@@ -1,0 +1,165 @@
+@model List<BusinessManagement.Application.DTOs.CustomerDetailsDto>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "إضافة مجموعة مسافرين جديدة";
+    var defaultGroupNum = ViewBag.DefaultGroupNumber as string ?? "";
+}
+
+<div class="container-fluid py-4 text-right">
+    <div class="glass-card p-4 shadow-lg mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary pb-3">
+            <h5 class="text-white fw-bold m-0"><i class="bi bi-people-fill text-primary me-2"></i> إضافة مجموعة مسافرين جديدة</h5>
+            <a href="/Customers" class="btn btn-outline-secondary btn-sm">إلغاء والعودة</a>
+        </div>
+
+        <form asp-action="CreateGroup" method="post" id="createGroupForm">
+            <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <label for="groupNumber" class="form-label text-secondary small">رقم المجموعة *</label>
+                    <input type="text" name="groupNumber" id="groupNumber" class="form-control fw-bold text-white border-primary" value="@defaultGroupNum" required />
+                    <span class="text-muted small">يمكنك استخدام الرقم المولد تلقائياً أو إدخل رقم مجموعة خاص بك.</span>
+                </div>
+            </div>
+
+            <h6 class="text-white fw-bold mb-3 border-bottom border-secondary pb-2">قائمة المسافرين بالمجموعة</h6>
+            <div id="passengersContainer" class="d-flex flex-column gap-3 mb-4">
+                <!-- Dynamic Passenger Cards Will Go Here -->
+            </div>
+
+            <div class="d-flex justify-content-between border-top border-secondary pt-3">
+                <button type="button" class="btn btn-outline-primary" onclick="addPassengerCard()"><i class="bi bi-plus-circle-fill me-1"></i> إضافة مسافر للمجموعة</button>
+                <button type="submit" class="btn btn-success px-4"><i class="bi bi-save-fill me-1"></i> حفظ المجموعة بالكامل</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script nonce="@Context.Items["ScriptNonce"]">
+        let passengerIndex = 0;
+
+        // Partner Dropdown List values passed from Controller
+        const partnersOptions = [];
+        @if (ViewBag.Partners is Microsoft.AspNetCore.Mvc.Rendering.SelectList partnersSelectList)
+        {
+            foreach (var item in partnersSelectList)
+            {
+                <text>partnersOptions.push({ value: "@item.Value", text: "@item.Text" });</text>
+            }
+        }
+
+        function addPassengerCard() {
+            const container = document.getElementById("passengersContainer");
+            const index = passengerIndex++;
+
+            let partnersHtml = `<option value="">اختر الشريك التابع...</option>`;
+            partnersOptions.forEach(opt => {
+                partnersHtml += `<option value="${opt.value}">${opt.text}</option>`;
+            });
+
+            const card = document.createElement("div");
+            card.className = "card border-secondary bg-dark bg-opacity-25 passenger-card mb-3";
+            card.id = `passenger_card_${index}`;
+            card.innerHTML = `
+                <div class="card-header bg-dark bg-opacity-50 d-flex justify-content-between align-items-center py-2">
+                    <span class="text-white fw-bold small"><i class="bi bi-person text-primary"></i> بيانات المسافر #${index + 1}</span>
+                    <button type="button" class="btn btn-outline-danger btn-sm py-0 px-2" onclick="removePassengerCard(${index})" title="حذف من المجموعة">
+                        <i class="bi bi-trash-fill small"></i> حذف
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label text-secondary small">الاسم بالكامل *</label>
+                            <input name="passengers[${index}].FullName" class="form-control form-control-sm text-white" placeholder="الاسم بالكامل" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-secondary small">رقم جواز السفر *</label>
+                            <input name="passengers[${index}].PassportNumber" class="form-control form-control-sm text-white text-uppercase" placeholder="A1234567" required pattern="^[a-zA-Z]\\d{7}$" title="يبدأ بحرف A ويليه 7 أرقام" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-secondary small">تاريخ انتهاء الجواز (اختياري)</label>
+                            <input name="passengers[${index}].PassportExpiry" type="date" class="form-control form-control-sm text-white" />
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label text-secondary small">الرقم القومي (14 رقماً)</label>
+                            <input name="passengers[${index}].NationalId" class="form-control form-control-sm text-white" placeholder="29000000000000" pattern="^\\d{14}$" title="يجب أن يتكون من 14 رقماً" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-secondary small">تاريخ الميلاد</label>
+                            <input name="passengers[${index}].DateOfBirth" type="date" class="form-control form-control-sm text-white" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-secondary small">التبعية لشيت الشريك *</label>
+                            <select name="passengers[${index}].PartnerId" class="form-select form-select-sm text-white bg-dark" required>
+                                ${partnersHtml}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-secondary small">الجنسية</label>
+                            <input name="passengers[${index}].Nationality" class="form-control form-control-sm text-white" value="Egyptian" />
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label text-secondary small">الجنس *</label>
+                            <select name="passengers[${index}].Gender" class="form-select form-select-sm text-white bg-dark" required>
+                                <option value="">اختر...</option>
+                                <option value="Male">ذكر</option>
+                                <option value="Female">أنثى</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-secondary small">رقم الهاتف</label>
+                            <input name="passengers[${index}].PhoneNumber" class="form-control form-control-sm text-white" placeholder="01234567890" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-secondary small">البريد الإلكتروني</label>
+                            <input name="passengers[${index}].Email" type="email" class="form-control form-control-sm text-white" placeholder="name@domain.com" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-secondary small">العنوان</label>
+                            <input name="passengers[${index}].Address" class="form-control form-control-sm text-white" placeholder="القاهرة، مصر" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary small">اسم شخص للطوارئ</label>
+                            <input name="passengers[${index}].EmergencyContactName" class="form-control form-control-sm text-white" placeholder="الاسم ثلاثي" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary small">رقم هاتف شخص للطوارئ</label>
+                            <input name="passengers[${index}].EmergencyContactPhone" class="form-control form-control-sm text-white" placeholder="رقم الهاتف" />
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+            updateHeadersOrder();
+        }
+
+        function removePassengerCard(index) {
+            const card = document.getElementById(`passenger_card_${index}`);
+            if (card) {
+                card.remove();
+                updateHeadersOrder();
+            }
+        }
+
+        function updateHeadersOrder() {
+            const cards = document.querySelectorAll(".passenger-card");
+            cards.forEach((card, idx) => {
+                const headerText = card.querySelector(".card-header span");
+                if (headerText) {
+                    headerText.innerHTML = `<i class="bi bi-person text-primary"></i> بيانات المسافر #${idx + 1}`;
+                }
+            });
+        }
+
+        // Add first passenger automatically
+        document.addEventListener("DOMContentLoaded", function() {
+            addPassengerCard();
+        });
+    </script>
+}

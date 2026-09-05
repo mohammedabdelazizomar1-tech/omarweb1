@@ -1,0 +1,871 @@
+@model BusinessManagement.Application.DTOs.CreateBookingDto
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "تسجيل حجز جديد";
+    var passengers = ViewBag.Passengers as IEnumerable<BusinessManagement.Application.DTOs.PassengerDto> ?? new List<BusinessManagement.Application.DTOs.PassengerDto>();
+    var partners = ViewBag.Partners as IEnumerable<BusinessManagement.Application.DTOs.PartnerQuotaMetric> ?? new List<BusinessManagement.Application.DTOs.PartnerQuotaMetric>();
+}
+
+<div class="glass-card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary pb-3">
+        <div>
+            <h5 class="text-white fw-bold m-0">تسجيل حجز مسافر جديد</h5>
+            <p class="text-muted small m-0">إعداد تفاصيل تكلفة البرنامج وتوزيع كوتة بوابة التأشيرات</p>
+        </div>
+        <a href="/Bookings" class="btn btn-outline-secondary"><i class="bi bi-arrow-right me-2"></i> العودة للدفتر</a>
+    </div>
+
+    <form asp-controller="Bookings" asp-action="Create" method="post" onsubmit="submitBookingForm(event, this)">
+        @Html.AntiForgeryToken()
+        
+        <div class="row g-4">
+            <!-- Right side: Inputs -->
+            <div class="col-lg-8">
+                <div class="row g-3 mb-4">
+            <!-- Passenger Profile Dropdown -->
+            <div class="col-md-5">
+                <label class="form-label">المسافرون المحددون للحجز *</label>
+                <div class="input-group">
+                    <div class="dropdown w-100 flex-grow-1" id="passengersDropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start d-flex justify-content-between align-items-center text-white" type="button" id="passengerDropdownBtn" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" style="background-color: rgba(30, 41, 59, 0.4); border-color: rgba(255, 255, 255, 0.1); height: 38px;">
+                            <span id="selectedCountText" style="color: rgba(255, 255, 255, 0.5);">اختر المسافرين... (0 محدد)</span>
+                        </button>
+                        <div class="dropdown-menu w-100 p-3 shadow-lg glass-card border border-secondary" aria-labelledby="passengerDropdownBtn" style="max-height: 350px; overflow-y: auto; background-color: rgba(255, 255, 255, 0.98);">
+                            <input type="text" id="passengerSearchInput" class="form-control mb-2" placeholder="ابحث باسم المسافر أو الجواز..." autocomplete="off" />
+                            <div class="dropdown-divider"></div>
+                            <div id="passengersListContainer" class="d-flex flex-column gap-2" style="max-height: 200px; overflow-y: auto;">
+                                @foreach (var p in passengers)
+                                {
+                                    <div class="form-check passenger-item" data-partner-id="@p.PartnerId">
+                                        <input class="form-check-input passenger-chk" type="checkbox" name="PassengerIds" value="@p.Id" id="chk_@p.Id" data-name="@p.FullName" data-passport="@p.PassportNumber" data-partner-id="@p.PartnerId" @(Model.PassengerId == p.Id ? "checked" : "") />
+                                        <label class="form-check-label text-dark fw-semibold" for="chk_@p.Id">
+                                            @p.FullName <small class="text-muted">(@p.PassportNumber)</small>
+                                        </label>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline-primary" type="button" onclick="openNewPassengerModal()" style="z-index: 4;" title="إضافة مسافر جديد">
+                        <i class="bi bi-person-plus-fill"></i> جديد
+                    </button>
+                    <button class="btn btn-outline-warning" type="button" onclick="document.getElementById('passengerExcelFile').click()" style="z-index: 4;" title="استيراد مسافرين من Excel">
+                        <i class="bi bi-file-earmark-arrow-up"></i>
+                    </button>
+                    <input type="file" id="passengerExcelFile" accept=".xlsx,.xls" onchange="importPassengersFromExcel(this)" style="position:absolute; left:-9999px; top:-9999px; width:1px; height:1px; opacity:0;" />
+                </div>
+                
+                <div class="form-check form-switch mt-2" id="registerAsGroupWrapper" style="display: none;">
+                    <input class="form-check-input" type="checkbox" id="registerAsGroupToggle" name="RegisterAsGroup" value="true" checked />
+                    <label class="form-check-label text-white fw-semibold small" for="registerAsGroupToggle">تسجيل هؤلاء المسافرين كمجموعة واحدة (مجموعة سفر)</label>
+                </div>
+                
+                <span id="passengerValidationMsg" class="text-danger small" style="display: none;">يجب اختيار مسافر واحد على الأقل.</span>
+            </div>
+
+            <!-- Partner Attribution (Admin-only selector) -->
+            @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+            {
+                <div class="col-md-4">
+                    <label asp-for="PartnerId" class="form-label">التبعية لشيت الشريك *</label>
+                    <select asp-for="PartnerId" class="form-select" required>
+                        <option value="">اختر الشريك التابع...</option>
+                        @foreach (var pt in partners)
+                        {
+                            <option value="@pt.PartnerId">شيت الشريك: @pt.PartnerName</option>
+                        }
+                    </select>
+                    <span asp-validation-for="PartnerId" class="text-danger small"></span>
+                </div>
+            }
+            else
+            {
+                // Hidden partner attribution for self-acting partners
+                <input type="hidden" asp-for="PartnerId" value="@partners.FirstOrDefault(p => p.PartnerName.Equals(User.Identity?.Name, StringComparison.OrdinalIgnoreCase))?.PartnerId" />
+            }
+
+            <!-- Travel Date -->
+            <div class="col-md-3">
+                <label asp-for="TravelDate" class="form-label">تاريخ السفر / المغادرة *</label>
+                <input asp-for="TravelDate" type="date" class="form-control" value="@Model.TravelDate.ToString("yyyy-MM-dd")" required />
+                <span asp-validation-for="TravelDate" class="text-danger small"></span>
+            </div>
+        </div>
+
+        <h5 class="text-white fw-bold mb-3 border-bottom border-secondary pb-2">تفصيل تكلفة وسعر البرنامج</h5>
+        
+        <!-- Numerical Spreadsheet Calculator -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3 col-sm-6">
+                <label asp-for="NetCost" class="form-label">نت (المنصة) (ج.م)</label>
+                <input asp-for="NetCost" type="number" step="0.01" class="form-control calc-trigger" placeholder="0.00" />
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <label asp-for="BarcodeCost" class="form-label">الباركود (ج.م)</label>
+                <input asp-for="BarcodeCost" type="number" step="0.01" class="form-control calc-trigger" placeholder="0.00" />
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <label asp-for="CompanyCost" class="form-label">الشركة (ج.م)</label>
+                <input asp-for="CompanyCost" type="number" step="0.01" class="form-control calc-trigger" placeholder="0.00" />
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <label asp-for="AirportCost" class="form-label">المطار (ج.م)</label>
+                <input asp-for="AirportCost" type="number" step="0.01" class="form-control calc-trigger" placeholder="0.00" />
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <label asp-for="ProgramCost" class="form-label">البرنامج / السكن (ج.م)</label>
+                <input asp-for="ProgramCost" type="number" step="0.01" class="form-control calc-trigger" placeholder="0.00" />
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <label asp-for="TicketCost" class="form-label">تذكرة الطيران (ج.م)</label>
+                <input asp-for="TicketCost" type="number" step="0.01" class="form-control calc-trigger" placeholder="0.00" />
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <label asp-for="BusCost" class="form-label">الباص / الانتقالات (ج.م)</label>
+                <input asp-for="BusCost" type="number" step="0.01" class="form-control calc-trigger" placeholder="0.00" />
+            </div>
+            
+            <!-- Has QR code Checkbox -->
+            <div class="col-md-3 col-sm-6 d-flex align-items-center mt-auto" style="height: 38px;">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" asp-for="HasQrCode" id="hasQrCode" />
+                    <label class="form-check-label text-white" for="hasQrCode">حجز كود بوابة (QR)</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Real-Time Calculation HUD -->
+        <div class="row g-3 mb-4">
+            <!-- Total Cost HUD -->
+            <div class="col-md-4">
+                <div class="p-3 rounded text-center" style="background-color: rgba(255, 255, 255, 0.01); border: 1px solid var(--border-color);">
+                    <small class="text-secondary d-block">إجمالي تكلفة البرنامج</small>
+                    <h3 class="text-white fw-bold m-0 mt-1" id="hudTotalCost">0.00 ج.م</h3>
+                </div>
+            </div>
+            <!-- Billed Selling Price -->
+            <div class="col-md-4">
+                <div class="p-3 rounded text-center" style="background-color: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2);">
+                    <label asp-for="SellingPrice" class="form-label small text-secondary d-block m-0">سعر البيع للمسافر (ج.م) *</label>
+                    <input asp-for="SellingPrice" type="number" step="0.01" class="form-control text-center text-info fw-bold bg-transparent border-0 fs-4 py-0" style="outline: none; box-shadow: none;" required placeholder="0.00" />
+                </div>
+            </div>
+            <!-- Expected Profit HUD -->
+            <div class="col-md-4">
+                <div class="p-3 rounded text-center" style="background-color: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2);">
+                    <small class="text-secondary d-block">صافي الأرباح المتوقعة</small>
+                    <h3 class="text-success fw-bold m-0 mt-1" id="hudNetProfit">0.00 ج.م</h3>
+                </div>
+            </div>
+        </div>
+
+        <h5 class="text-white fw-bold mb-3 border-bottom border-secondary pb-2">بيانات التسديد والدفع الأولي (اختياري)</h5>
+        
+        <!-- Total Initial Payment Summary Banner -->
+        <div class="p-3 mb-3 rounded" style="background-color: rgba(59, 130, 246, 0.05); border: 1px dashed rgba(59, 130, 246, 0.25);">
+            <div class="row g-3 text-center">
+                <!-- Total Billed Amount (Selling Price) -->
+                <div class="col-md-4">
+                    <span class="text-secondary small d-block">إجمالي المبالغ الكلية للمجموعة:</span>
+                    <h4 class="text-white fw-bold m-0 mt-1" id="totalGroupBilledDisplay">0.00 ج.م</h4>
+                </div>
+                
+                <!-- Total Initial Payments Received -->
+                <div class="col-md-4 border-start border-end border-secondary">
+                    <span class="text-secondary small d-block">إجمالي المبالغ المستلمة (المدفوع):</span>
+                    <h3 class="text-info fw-bold m-0 mt-1" id="totalPaymentsSumDisplay">0.00 ج.م</h3>
+                    <input type="hidden" asp-for="PaymentsCollected" id="PaymentsCollected" value="0" />
+                </div>
+                
+                <!-- Total Remaining Balance -->
+                <div class="col-md-4">
+                    <span class="text-secondary small d-block">إجمالي المبالغ المتبقية على المجموعة:</span>
+                    <h4 class="text-warning fw-bold m-0 mt-1" id="totalGroupRemainingDisplay">0.00 ج.م</h4>
+                </div>
+            </div>
+        </div>
+
+        <!-- Passenger Individual Payment Forms Container -->
+        <div id="passengerIndividualPaymentsContainer" class="d-flex flex-column gap-3 mb-4">
+            <div class="text-center text-muted py-4 glass-card border border-secondary" id="noPassengerPaymentsMsg" style="background-color: rgba(255, 255, 255, 0.01);">
+                الرجاء اختيار مسافر واحد على الأقل لتحديد تفاصيل الدفع الخاصة به.
+            </div>
+        </div>
+
+        <h5 class="text-white fw-bold mb-3 border-bottom border-secondary pb-2">ملاحظات إضافية</h5>
+        <div class="row g-3 mb-4">
+            <div class="col-12">
+                <label asp-for="Notes" class="form-label">ملاحظات الحجز الداخلية</label>
+                <input asp-for="Notes" class="form-control" placeholder="تعليمات خاصة، وضع تسليم جواز السفر..." />
+            </div>
+        </div>
+
+            </div>
+            
+            <!-- Left side: Selected Passengers Sidebar -->
+            <div class="col-lg-4">
+                <div class="glass-card p-3" style="position: sticky; top: 1.5rem; background-color: rgba(255, 255, 255, 0.03); border-color: rgba(255, 255, 255, 0.08);">
+                    <h6 class="text-white fw-bold mb-3 d-flex justify-content-between align-items-center">
+                        <span>المسافرون المختارون (<span id="selectedBadgeCount" class="text-info fw-bold">0</span>)</span>
+                        <i class="bi bi-people-fill text-primary"></i>
+                    </h6>
+                    <div id="selectedPassengersList" class="d-flex flex-column gap-2" style="max-height: 450px; overflow-y: auto;">
+                        <div class="text-center text-muted py-4" id="noPassengersMsg">
+                            لم يتم اختيار أي مسافر بعد.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 border-top border-secondary pt-3">
+            <a href="/Bookings" class="btn btn-outline-secondary px-4 py-2">إلغاء</a>
+            <button type="submit" class="btn btn-primary px-5 py-2">
+                <i class="bi bi-save me-2"></i> حفظ الحجز وتأكيد الملف
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Modal Container Placeholder for Passenger Registration -->
+<div class="modal fade" id="newPassengerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content text-right">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">تسجيل مسافر جديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="passengerForm" onsubmit="submitNewPassenger(event)">
+                @Html.AntiForgeryToken()
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small">اسم المسافر بالكامل *</label>
+                            <input type="text" name="FullName" class="form-control" required placeholder="مثال: أحمد محمد علي" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">رقم جواز السفر *</label>
+                            <input type="text" name="PassportNumber" class="form-control" required placeholder="A1234567" pattern="^[a-zA-Z]\d{7}$" title="يبدأ بحرف A ويليه 7 أرقام" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">تاريخ انتهاء الجواز (اختياري)</label>
+                            <input type="date" name="PassportExpiry" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">الرقم القومي (14 رقماً)</label>
+                            <input type="text" name="NationalId" class="form-control" placeholder="29000000000000" pattern="^\d{14}$" title="يجب أن يتكون من 14 رقماً" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">تاريخ الميلاد</label>
+                            <input type="date" name="DateOfBirth" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">التبعية لشيت الشريك *</label>
+                            <select name="PartnerId" class="form-select" required>
+                                <option value="">اختر الشريك التابع...</option>
+                                @foreach (var pt in partners)
+                                {
+                                    <option value="@pt.PartnerId">شيت الشريك: @pt.PartnerName</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">الجنسية</label>
+                            <input type="text" name="Nationality" class="form-control" value="Egyptian" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">الجنس *</label>
+                            <select name="Gender" class="form-select" required>
+                                <option value="">اختر...</option>
+                                <option value="Male">ذكر</option>
+                                <option value="Female">أنثى</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">رقم الهاتف</label>
+                            <input type="text" name="PhoneNumber" class="form-control" placeholder="01234567890" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">البريد الإلكتروني</label>
+                            <input type="email" name="Email" class="form-control" placeholder="name@domain.com" />
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label small">العنوان</label>
+                            <input type="text" name="Address" class="form-control" placeholder="القاهرة، مصر" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">اسم شخص للطوارئ</label>
+                            <input type="text" name="EmergencyContactName" class="form-control" placeholder="الاسم ثلاثي" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">رقم هاتف شخص للطوارئ</label>
+                            <input type="text" name="EmergencyContactPhone" class="form-control" placeholder="رقم الهاتف" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-2"></i> إضافة ملف المسافر
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script nonce="@Context.Items["ScriptNonce"]">
+        // Real-time calculations
+        function calculateSpreadsheetSums() {
+            const net = parseFloat(document.getElementById("NetCost").value) || 0;
+            const barcode = parseFloat(document.getElementById("BarcodeCost").value) || 0;
+            const company = parseFloat(document.getElementById("CompanyCost").value) || 0;
+            const airport = parseFloat(document.getElementById("AirportCost").value) || 0;
+            const program = parseFloat(document.getElementById("ProgramCost").value) || 0;
+            const ticket = parseFloat(document.getElementById("TicketCost").value) || 0;
+            const bus = parseFloat(document.getElementById("BusCost").value) || 0;
+
+            const sellingPrice = parseFloat(document.getElementById("SellingPrice").value) || 0;
+
+            // Total Cost Sum
+            const totalCost = net + barcode + company + airport + program + ticket + bus;
+            const netProfit = sellingPrice - totalCost;
+
+            // Auto-check HasQrCode checkbox if barcode cost > 0
+            const hasQrCodeCheckbox = document.getElementById("hasQrCode");
+            if (hasQrCodeCheckbox && barcode > 0) {
+                hasQrCodeCheckbox.checked = true;
+            }
+
+            // Update UI HUD
+            document.getElementById("hudTotalCost").textContent = `${totalCost.toFixed(2)} ج.م`;
+            
+            const profitEl = document.getElementById("hudNetProfit");
+            profitEl.textContent = `${netProfit.toFixed(2)} ج.م`;
+            if (netProfit < 0) {
+                profitEl.className = "text-danger fw-bold m-0 mt-1";
+            } else {
+                profitEl.className = "text-success fw-bold m-0 mt-1";
+            }
+        }
+
+        // Bind calculation listeners
+        document.querySelectorAll(".calc-trigger, #SellingPrice").forEach(input => {
+            input.addEventListener("input", () => {
+                calculateSpreadsheetSums();
+                updatePaymentsTotalSum();
+            });
+        });
+
+        // Initialize calculations and multiselect event bindings
+        document.addEventListener("DOMContentLoaded", () => {
+            calculateSpreadsheetSums();
+
+            const searchInput = document.getElementById("passengerSearchInput");
+            const listContainer = document.getElementById("passengersListContainer");
+            const partnerSelect = document.getElementById("PartnerId");
+
+            function filterPassengerItems() {
+                const query = searchInput ? searchInput.value.toLowerCase() : "";
+                const selectedPartnerId = (partnerSelect ? partnerSelect.value : "").trim().toLowerCase();
+                const items = listContainer ? listContainer.querySelectorAll(".passenger-item") : [];
+                
+                if (!selectedPartnerId) {
+                    items.forEach(item => {
+                        item.style.setProperty("display", "none", "important");
+                        const chk = item.querySelector(".passenger-chk");
+                        if (chk) chk.checked = false;
+                    });
+                    updateSelectedPassengersText();
+                    return;
+                }
+
+                items.forEach(item => {
+                    const label = item.querySelector("label").textContent.toLowerCase();
+                    const itemPartnerId = (item.getAttribute("data-partner-id") || "").trim().toLowerCase();
+                    
+                    const matchesSearch = label.includes(query);
+                    const matchesPartner = itemPartnerId === selectedPartnerId;
+                    
+                    if (matchesSearch && matchesPartner) {
+                        item.style.setProperty("display", "block", "important");
+                    } else {
+                        item.style.setProperty("display", "none", "important");
+                        if (!matchesPartner) {
+                            const chk = item.querySelector(".passenger-chk");
+                            if (chk) {
+                                chk.checked = false; // uncheck to prevent accidental booking
+                            }
+                        }
+                    }
+                });
+                updateSelectedPassengersText();
+            }
+
+            // Expose globally
+            window.filterPassengerItems = filterPassengerItems;
+
+            // Search filtering logic
+            if (searchInput) {
+                searchInput.addEventListener("input", filterPassengerItems);
+            }
+
+            // Partner filtering logic
+            if (partnerSelect) {
+                partnerSelect.addEventListener("change", filterPassengerItems);
+            }
+
+            // Initialize change events for checkboxes
+            bindCheckboxChangeEvents();
+            
+            // Run filter initially on load
+            filterPassengerItems();
+        });
+
+        function bindCheckboxChangeEvents() {
+            const checkboxes = document.querySelectorAll(".passenger-chk");
+            checkboxes.forEach(chk => {
+                chk.removeEventListener("change", updateSelectedPassengersText);
+                chk.addEventListener("change", updateSelectedPassengersText);
+            });
+        }
+
+        // Store passenger payment fields in memory to preserve typed values
+        const passengerPaymentsMap = {};
+        const passengerMethodsMap = {};
+        const passengerReceiptsMap = {};
+        const passengerDatesMap = {};
+
+        function updateSelectedPassengersText() {
+            const checkboxes = document.querySelectorAll(".passenger-chk");
+            const checked = Array.from(checkboxes).filter(c => c.checked);
+            const selectedCountText = document.getElementById("selectedCountText");
+            const validationMsg = document.getElementById("passengerValidationMsg");
+
+            // Toggle groups container display
+            const groupWrapper = document.getElementById("registerAsGroupWrapper");
+            const groupToggle = document.getElementById("registerAsGroupToggle");
+            if (groupWrapper) {
+                if (checked.length > 1) {
+                    groupWrapper.style.display = "block";
+                } else {
+                    groupWrapper.style.display = "none";
+                    if (groupToggle) groupToggle.checked = false;
+                }
+            }
+
+            // Sidebar elements
+            const badgeCount = document.getElementById("selectedBadgeCount");
+            const listContainer = document.getElementById("selectedPassengersList");
+            
+            // Payment elements
+            const paymentsContainer = document.getElementById("passengerIndividualPaymentsContainer");
+
+            if (badgeCount) badgeCount.textContent = checked.length;
+
+            if (checked.length === 0) {
+                selectedCountText.textContent = "اختر المسافرين... (0 محدد)";
+                selectedCountText.style.color = "rgba(255, 255, 255, 0.5)";
+                if (listContainer) {
+                    listContainer.innerHTML = `
+                        <div class="text-center text-muted py-4" id="noPassengersMsg">
+                            لم يتم اختيار أي مسافر بعد.
+                        </div>
+                    `;
+                }
+                if (paymentsContainer) {
+                    paymentsContainer.innerHTML = `
+                        <div class="text-center text-muted py-4 glass-card border border-secondary" id="noPassengerPaymentsMsg" style="background-color: rgba(255, 255, 255, 0.01);">
+                            الرجاء اختيار مسافر واحد على الأقل لتحديد تفاصيل الدفع الخاصة به.
+                        </div>
+                    `;
+                }
+                updatePaymentsTotalSum();
+            } else {
+                if (validationMsg) validationMsg.style.display = "none";
+                if (checked.length === 1) {
+                    selectedCountText.textContent = checked[0].getAttribute("data-name");
+                    selectedCountText.style.color = "#FFFFFF";
+                } else {
+                    selectedCountText.textContent = `${checked[0].getAttribute("data-name")} (+${checked.length - 1} آخرين)`;
+                    selectedCountText.style.color = "#FFFFFF";
+                }
+
+                // Render Sidebar list
+                if (listContainer) {
+                    listContainer.innerHTML = "";
+                    checked.forEach(chk => {
+                        const id = chk.value;
+                        const name = chk.getAttribute("data-name");
+                        const passport = chk.getAttribute("data-passport");
+
+                        const div = document.createElement("div");
+                        div.className = "d-flex justify-content-between align-items-center p-2 rounded border border-secondary";
+                        div.style.backgroundColor = "rgba(255, 255, 255, 0.02)";
+                        div.style.marginBottom = "6px";
+                        div.innerHTML = `
+                            <div>
+                                <div class="text-white small fw-bold">${name}</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">جواز: ${passport}</div>
+                            </div>
+                            <button type="button" class="btn btn-sm text-danger p-0 border-0 bg-transparent" onclick="uncheckPassenger('${id}')" title="إزالة">
+                                <i class="bi bi-x-circle-fill fs-5"></i>
+                            </button>
+                        `;
+                        listContainer.appendChild(div);
+                    });
+                }
+
+                // Render Individual Payment Form Cards
+                if (paymentsContainer) {
+                    paymentsContainer.innerHTML = "";
+                    const todayStr = new Date().toISOString().substring(0, 10);
+
+                    checked.forEach(chk => {
+                        const id = chk.value;
+                        const name = chk.getAttribute("data-name");
+                        const passport = chk.getAttribute("data-passport");
+
+                        // Retrieve preserved values or default
+                        const amt = passengerPaymentsMap[id] !== undefined ? passengerPaymentsMap[id] : "";
+                        const method = passengerMethodsMap[id] || "Cash";
+                        const receipt = passengerReceiptsMap[id] || "";
+                        const date = passengerDatesMap[id] || todayStr;
+
+                        const div = document.createElement("div");
+                        div.className = "glass-card p-3 border border-secondary mb-2 rounded position-relative";
+                        div.style.backgroundColor = "rgba(255, 255, 255, 0.02)";
+                        div.innerHTML = `
+                            <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-secondary">
+                                <span class="text-white fw-bold small"><i class="bi bi-person-fill me-1 text-primary"></i>${name} <small class="text-secondary">(${passport})</small></span>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-md-3 col-sm-6">
+                                    <label class="form-label small text-secondary m-0 mb-1">المبلغ المدفوع (ج.م)</label>
+                                    <input type="number" step="0.01" class="form-control form-control-sm passenger-payment-val" 
+                                           name="PassengerPayments[${id}]" data-id="${id}" value="${amt}" placeholder="0.00" />
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <label class="form-label small text-secondary m-0 mb-1">طريقة الدفع</label>
+                                    <select class="form-select form-select-sm passenger-payment-method" name="PassengerPaymentMethods[${id}]" data-id="${id}">
+                                        <option value="Cash" ${method === 'Cash' ? 'selected' : ''}>نقداً / خزينة</option>
+                                        <option value="BankTransfer" ${method === 'BankTransfer' ? 'selected' : ''}>تحويل بنكي</option>
+                                        <option value="Wallet" ${method === 'Wallet' ? 'selected' : ''}>محفظة إلكترونية</option>
+                                        <option value="InstaPay" ${method === 'InstaPay' ? 'selected' : ''}>انستا باي (InstaPay)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <label class="form-label small text-secondary m-0 mb-1">رقم الإيصال / مرجع الحساب</label>
+                                    <input type="text" class="form-control form-control-sm passenger-payment-receipt" 
+                                           name="PassengerReceiptNumbers[${id}]" data-id="${id}" value="${receipt}" placeholder="اختياري (رقم التحويل/الحساب)" />
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <label class="form-label small text-secondary m-0 mb-1">تاريخ الدفع</label>
+                                    <input type="date" class="form-control form-control-sm passenger-payment-date" 
+                                           name="PassengerPaymentDates[${id}]" data-id="${id}" value="${date}" />
+                                </div>
+                            </div>
+                        `;
+                        paymentsContainer.appendChild(div);
+                    });
+
+                    // Bind change listeners to input elements inside passenger forms
+                    paymentsContainer.querySelectorAll(".passenger-payment-val").forEach(input => {
+                        input.addEventListener("input", function() {
+                            const pId = this.getAttribute("data-id");
+                            const val = parseFloat(this.value) || 0;
+                            passengerPaymentsMap[pId] = val;
+                            updatePaymentsTotalSum();
+                        });
+                    });
+
+                    paymentsContainer.querySelectorAll(".passenger-payment-method").forEach(select => {
+                        select.addEventListener("change", function() {
+                            const pId = this.getAttribute("data-id");
+                            passengerMethodsMap[pId] = this.value;
+                        });
+                    });
+
+                    paymentsContainer.querySelectorAll(".passenger-payment-receipt").forEach(input => {
+                        input.addEventListener("input", function() {
+                            const pId = this.getAttribute("data-id");
+                            passengerReceiptsMap[pId] = this.value;
+                        });
+                    });
+
+                    paymentsContainer.querySelectorAll(".passenger-payment-date").forEach(input => {
+                        input.addEventListener("change", function() {
+                            const pId = this.getAttribute("data-id");
+                            passengerDatesMap[pId] = this.value;
+                        });
+                    });
+                }
+
+                updatePaymentsTotalSum();
+            }
+        }
+
+        function updatePaymentsTotalSum() {
+            const checkboxes = document.querySelectorAll(".passenger-chk");
+            const checked = Array.from(checkboxes).filter(c => c.checked);
+            
+            // 1. Calculate Billed Amount
+            const sellingPriceInput = document.getElementById("SellingPrice");
+            const sellingPrice = parseFloat(sellingPriceInput ? sellingPriceInput.value : 0) || 0;
+            const totalBilled = sellingPrice * checked.length;
+
+            // 2. Calculate Total Paid
+            let totalPaid = 0;
+            checked.forEach(chk => {
+                const id = chk.value;
+                const amt = passengerPaymentsMap[id] || 0;
+                totalPaid += amt;
+            });
+
+            // 3. Calculate Total Remaining
+            const totalRemaining = totalBilled - totalPaid;
+
+            // Update displays
+            const totalBilledDisplay = document.getElementById("totalGroupBilledDisplay");
+            const sumDisplay = document.getElementById("totalPaymentsSumDisplay");
+            const totalRemainingDisplay = document.getElementById("totalGroupRemainingDisplay");
+            const paymentsCollectedInput = document.getElementById("PaymentsCollected");
+
+            if (totalBilledDisplay) totalBilledDisplay.textContent = `${totalBilled.toFixed(2)} ج.م`;
+            if (sumDisplay) sumDisplay.textContent = `${totalPaid.toFixed(2)} ج.م`;
+            if (totalRemainingDisplay) {
+                totalRemainingDisplay.textContent = `${totalRemaining.toFixed(2)} ج.م`;
+                if (totalRemaining < 0) {
+                    totalRemainingDisplay.className = "text-danger fw-bold m-0 mt-1";
+                } else {
+                    totalRemainingDisplay.className = "text-warning fw-bold m-0 mt-1";
+                }
+            }
+            if (paymentsCollectedInput) paymentsCollectedInput.value = totalPaid;
+        }
+
+        // Global helper to uncheck from sidebar
+        window.uncheckPassenger = function(id) {
+            const chk = document.getElementById(`chk_${id}`);
+            if (chk) {
+                chk.checked = false;
+                updateSelectedPassengersText();
+            }
+        }
+
+        // Open Passenger register modal
+        function openNewPassengerModal() {
+            const modalEl = document.getElementById("newPassengerModal");
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+        }
+
+        // AJAX Passenger registration from inside booking page
+        async function submitNewPassenger(event) {
+            event.preventDefault();
+            const form = document.getElementById("passengerForm");
+            const formData = new FormData(form);
+
+            try {
+                const result = await BusinessManagementAjax("/Bookings/CreatePassenger", "POST", formData);
+                if (result.success) {
+                    BusinessManagementAlert(result.message, "success");
+                    
+                    // Add newly created passenger to select/checkbox list
+                    const listContainer = document.getElementById("passengersListContainer");
+                    
+                    const itemDiv = document.createElement("div");
+                    itemDiv.className = "form-check passenger-item";
+                    itemDiv.setAttribute("data-partner-id", result.partnerId || "");
+                    
+                    const inputEl = document.createElement("input");
+                    inputEl.className = "form-check-input passenger-chk";
+                    inputEl.type = "checkbox";
+                    inputEl.name = "PassengerIds";
+                    inputEl.value = result.passengerId;
+                    inputEl.id = `chk_${result.passengerId}`;
+                    
+                    // Check if newly created passenger matches currently selected partner in booking page
+                    const mainPartnerSelect = document.getElementById("PartnerId");
+                    const selectedPartnerId = mainPartnerSelect ? mainPartnerSelect.value : "";
+                    const passengerPartnerId = result.partnerId || "";
+
+                    const isMatch = selectedPartnerId && passengerPartnerId === selectedPartnerId;
+                    inputEl.checked = isMatch;
+
+                    inputEl.setAttribute("data-name", result.name);
+                    inputEl.setAttribute("data-passport", result.passport);
+                    inputEl.setAttribute("data-partner-id", result.partnerId || "");
+                    
+                    const labelEl = document.createElement("label");
+                    labelEl.className = "form-check-label text-dark fw-semibold";
+                    labelEl.setAttribute("for", `chk_${result.passengerId}`);
+                    labelEl.innerHTML = `${result.name} <small class="text-muted">(${result.passport})</small>`;
+                    
+                    itemDiv.appendChild(inputEl);
+                    itemDiv.appendChild(labelEl);
+                    listContainer.insertBefore(itemDiv, listContainer.firstChild);
+                    
+                    // Re-bind checkbox change events and update text
+                    bindCheckboxChangeEvents();
+                    
+                    if (window.filterPassengerItems) {
+                        window.filterPassengerItems();
+                    } else {
+                        updateSelectedPassengersText();
+                    }
+
+                    // Close modal
+                    const modalEl = document.getElementById("newPassengerModal");
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    modal.hide();
+                    form.reset();
+                } else {
+                    BusinessManagementAlert(result.message, "danger");
+                }
+            } catch (error) {
+                console.error("Failed to add passenger:", error);
+            }
+        }
+
+        // AJAX Booking Submit
+        async function submitBookingForm(event, form) {
+            event.preventDefault();
+
+            // Custom validation for checked passenger list
+            const checkedCount = Array.from(document.querySelectorAll(".passenger-chk")).filter(c => c.checked).length;
+            if (checkedCount === 0) {
+                const validationMsg = document.getElementById("passengerValidationMsg");
+                validationMsg.style.display = "block";
+                validationMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+
+            if (window.jQuery) {
+                const $form = window.jQuery(form);
+                if ($form.data("validator") && !$form.valid()) {
+                    return;
+                }
+            }
+
+            const formData = new FormData(form);
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
+
+            try {
+                const result = await BusinessManagementAjax(form.action, form.method, formData);
+                if (result.success) {
+                    BusinessManagementAlert(result.message, "success");
+                    setTimeout(() => location.href = "/Bookings", 1200);
+                } else {
+                    BusinessManagementAlert(result.message, "danger");
+                    submitBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error("Booking form submit error:", error);
+                submitBtn.disabled = false;
+            }
+        }
+
+        // =============================================
+        // استيراد مسافرين من ملف Excel
+        // =============================================
+        async function importPassengersFromExcel(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            // Reset so the same file can be selected again
+            input.value = '';
+
+            if (window.Swal) {
+                Swal.fire({
+                    title: 'جاري استيراد المسافرين...',
+                    text: 'يرجى الانتظار بينما يتم معالجة ملف Excel.',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Get CSRF token
+            const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            if (csrfToken) formData.append('__RequestVerificationToken', csrfToken);
+
+            try {
+                const result = await BusinessManagementAjax('/Bookings/ImportPassengersExcel', 'POST', formData);
+                if (window.Swal) Swal.close();
+
+                if (result && result.success && result.passengers && result.passengers.length > 0) {
+                    const listContainer = document.getElementById('passengersListContainer');
+                    let addedCount = 0;
+                    let skippedCount = 0;
+
+                    result.passengers.forEach(p => {
+                        // Skip if already in list
+                        if (document.getElementById(`chk_${p.id}`)) {
+                            skippedCount++;
+                            return;
+                        }
+
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'form-check passenger-item';
+                        itemDiv.setAttribute('data-partner-id', p.partnerId || '');
+
+                        const inputEl = document.createElement('input');
+                        inputEl.className = 'form-check-input passenger-chk';
+                        inputEl.type = 'checkbox';
+                        inputEl.name = 'PassengerIds';
+                        inputEl.value = p.id;
+                        inputEl.id = `chk_${p.id}`;
+                        inputEl.checked = true;
+                        inputEl.setAttribute('data-name', p.fullName);
+                        inputEl.setAttribute('data-passport', p.passportNumber);
+                        inputEl.setAttribute('data-partner-id', p.partnerId || '');
+
+                        const labelEl = document.createElement('label');
+                        labelEl.className = 'form-check-label text-dark fw-semibold';
+                        labelEl.setAttribute('for', `chk_${p.id}`);
+                        labelEl.innerHTML = `${p.fullName} <small class="text-muted">(${p.passportNumber})</small>`;
+
+                        itemDiv.appendChild(inputEl);
+                        itemDiv.appendChild(labelEl);
+                        listContainer.insertBefore(itemDiv, listContainer.firstChild);
+                        addedCount++;
+                    });
+
+                    bindCheckboxChangeEvents();
+                    updateSelectedPassengersText();
+
+                    let msg = `تم إضافة ${addedCount} مسافر بنجاح.`;
+                    if (skippedCount > 0) msg += ` (${skippedCount} مسافر موجود بالفعل تم تجاهله)`;
+
+                    if (window.Swal) {
+                        Swal.fire({ title: 'تم الاستيراد', text: msg, icon: 'success', confirmButtonText: 'حسناً' });
+                    } else {
+                        alert(msg);
+                    }
+                } else {
+                    const errMsg = result?.message || 'لم يتم العثور على مسافرين في الملف أو حدث خطأ.';
+                    if (window.Swal) {
+                        Swal.fire({ title: 'تنبيه', text: errMsg, icon: 'warning', confirmButtonText: 'حسناً' });
+                    } else {
+                        alert(errMsg);
+                    }
+                }
+            } catch (error) {
+                if (window.Swal) Swal.close();
+                console.error('Excel import error:', error);
+                if (window.Swal) {
+                    Swal.fire({ title: 'خطأ', text: 'فشل استيراد ملف Excel. تأكد من صحة الملف.', icon: 'error', confirmButtonText: 'حسناً' });
+                }
+            }
+        }
+    </script>
+}
+
+
+
+

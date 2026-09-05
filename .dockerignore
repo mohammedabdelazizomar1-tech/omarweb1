@@ -1,0 +1,12 @@
+**/.git
+**/.gitignore
+**/.vs
+**/.vscode
+**/bin
+**/obj
+**/publish
+**/logs
+**/*.user
+**/*.suo
+**/*.db
+**/*.xlsx

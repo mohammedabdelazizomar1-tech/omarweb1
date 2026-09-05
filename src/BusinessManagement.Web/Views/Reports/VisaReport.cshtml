@@ -1,0 +1,117 @@
+@model BusinessManagement.Application.DTOs.VisaReportDto
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "تقرير التأشيرات والبوابات";
+    string fromDate = ViewBag.FromDate;
+    string toDate = ViewBag.ToDate;
+}
+
+<div class="container-fluid py-4 text-right">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary pb-3">
+        <div>
+            <h4 class="text-white fw-bold m-0"><i class="bi bi-passport text-info me-2"></i> تقرير التأشيرات وبوابات السفر (Visa & Gateways)</h4>
+            <p class="text-muted small m-0">تحليل وإحصائيات التأشيرات الصادرة (B2C، VIP سلفت، والتأشيرات الخارجية) وحالة الباركود.</p>
+        </div>
+        <div class="d-flex gap-2 no-print">
+            <a href="/Reports/ExportVisaExcel?fromDate=@fromDate&toDate=@toDate" class="btn btn-outline-success btn-sm"><i class="bi bi-file-earmark-excel"></i> تصدير Excel</a>
+            <button onclick="window.print();" class="btn btn-outline-info btn-sm"><i class="bi bi-printer"></i> طباعة / PDF</button>
+            <a href="/Reports" class="btn btn-outline-secondary btn-sm">العودة</a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="glass-card p-3 mb-4 no-print">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label text-secondary small">من تاريخ</label>
+                <input type="date" name="fromDate" value="@fromDate" class="form-control" />
+            </div>
+            <div class="col-md-5">
+                <label class="form-label text-secondary small">إلى تاريخ</label>
+                <input type="date" name="toDate" value="@toDate" class="form-control" />
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel"></i> تصفية</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="glass-card p-3 border-start border-primary border-4">
+                <small class="text-muted">إجمالي التأشيرات الصادرة</small>
+                <h3 class="text-white fw-bold m-0 mt-1">@Model.TotalVisas</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="glass-card p-3 border-start border-success border-4">
+                <small class="text-muted">تأشيرات أفراد B2C / باركود</small>
+                <h3 class="text-success fw-bold m-0 mt-1">@Model.QrCodeVisasCount</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="glass-card p-3 border-start border-warning border-4">
+                <small class="text-muted">تأشيرات VIP سلفت</small>
+                <h3 class="text-warning fw-bold m-0 mt-1">@Model.VipSlotsCount</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="glass-card p-3 border-start border-info border-4">
+                <small class="text-muted">تأشيرات خارجي مسجلة</small>
+                <h3 class="text-info fw-bold m-0 mt-1">@Model.ExternalVisasCount</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visas List Table -->
+    <div class="glass-card p-4">
+        <h6 class="text-white fw-bold mb-3 border-bottom border-secondary pb-2">بيان تفصيلي بالتأشيرات الصادرة والبوابات</h6>
+        <div class="table-responsive">
+            <table class="BusinessManagement-table text-nowrap table-hover" style="font-size: 0.85rem;">
+                <thead>
+                    <tr>
+                        <th>اسم المسافر</th>
+                        <th>رقم الجواز</th>
+                        <th>نوع التأشيرة / القناة</th>
+                        <th>رمز الاستجابة السريعة (QR)</th>
+                        <th>حالة الرحلة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.VisasList.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">لا توجد سجلات تأشيرة مطابقة للتصفية.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var v in Model.VisasList)
+                        {
+                            <tr>
+                                <td class="fw-bold text-white">@v.PassengerName</td>
+                                <td class="text-muted font-monospace">@v.PassportNumber</td>
+                                <td><span class="badge bg-secondary">@v.VisaType</span></td>
+                                <td>
+                                    @if (v.HasQrCode)
+                                    {
+                                        <span class="text-success"><i class="bi bi-qr-code"></i> متوفر ومطبوع</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-danger"><i class="bi bi-x-circle"></i> غير متوفر</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge @(v.Status == "منتهية الصلاحية" ? "bg-danger" : "bg-success")">@v.Status</span>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

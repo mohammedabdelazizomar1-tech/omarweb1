@@ -1,0 +1,281 @@
+@model BusinessManagement.Application.DTOs.CustomerDetailsDto
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = $"الملف الشخصي: {Model.FullName}";
+
+    var notes = ViewBag.Notes as IEnumerable<BusinessManagement.Application.DTOs.PassengerNoteDto> ?? new List<BusinessManagement.Application.DTOs.PassengerNoteDto>();
+    var attachments = ViewBag.Attachments as IEnumerable<BusinessManagement.Application.DTOs.AttachmentDto> ?? new List<BusinessManagement.Application.DTOs.AttachmentDto>();
+    var history = ViewBag.History as IEnumerable<BusinessManagement.Application.DTOs.CustomerBookingHistoryDto> ?? new List<BusinessManagement.Application.DTOs.CustomerBookingHistoryDto>();
+}
+
+<div class="container-fluid py-4 text-right">
+    <!-- Top actions -->
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary pb-3">
+        <div>
+            <h4 class="text-white fw-bold m-0"><i class="bi bi-person-badge text-primary me-2"></i> ملف المسافر: @Model.FullName</h4>
+            <p class="text-muted small m-0">تصفح سجل الحجوزات والمرفقات والملاحظات الخاصة بالعميل.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/Customers/Print/@Model.Id" class="btn btn-outline-info btn-sm" target="_blank">
+                <i class="bi bi-printer me-1"></i> طباعة الملف
+            </a>
+            <a href="/Customers/Edit/@Model.Id" class="btn btn-primary btn-sm">
+                <i class="bi bi-pencil-square me-1"></i> تعديل البيانات
+            </a>
+            <a href="/Customers" class="btn btn-outline-secondary btn-sm">العودة للدليل</a>
+        </div>
+    </div>
+
+    @if (ViewBag.SuccessMessage != null)
+    {
+        <div class="alert alert-success border-0 small mb-4 py-2" style="background-color: rgba(16, 185, 129, 0.1); color: #34d399;">
+            @ViewBag.SuccessMessage
+        </div>
+    }
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div class="alert alert-danger border-0 small mb-4 py-2" style="background-color: rgba(239, 68, 68, 0.1); color: #f87171;">
+            @ViewBag.ErrorMessage
+        </div>
+    }
+
+    <div class="row g-4">
+        <!-- Sidebar - Profile details -->
+        <div class="col-lg-4">
+            <div class="glass-card p-4">
+                <div class="text-center mb-3">
+                    <div class="position-relative d-inline-block">
+                        <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" 
+                             alt="Avatar" class="rounded-circle border border-primary border-3 shadow" 
+                             style="width: 100px; height: 100px; object-fit: cover;" />
+                    </div>
+                    <h5 class="text-white fw-bold mt-3 mb-1">@Model.FullName</h5>
+                    <div class="badge bg-secondary mb-2">@Model.Nationality</div>
+                </div>
+
+                <hr class="border-secondary mb-3" />
+
+                <div class="text-muted small">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>رقم جواز السفر:</span>
+                        <span class="text-white fw-semibold">@Model.PassportNumber</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>انتهاء جواز السفر:</span>
+                        <span class="text-white fw-semibold">@(Model.PassportExpiry.HasValue ? Model.PassportExpiry.Value.ToString("yyyy-MM-dd") : "-")</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>الرقم القومي:</span>
+                        <span class="text-white fw-semibold">@Model.NationalId</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>تاريخ الميلاد:</span>
+                        <span class="text-white fw-semibold">@(Model.DateOfBirth.HasValue ? Model.DateOfBirth.Value.ToString("yyyy-MM-dd") : "-")</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>الجنس:</span>
+                        <span class="text-white fw-semibold">@(Model.Gender == "Male" ? "ذكر" : "أنثى")</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>رقم الهاتف:</span>
+                        <span class="text-white fw-semibold">@Model.PhoneNumber</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>التبعية (الشريك):</span>
+                        <span class="text-white fw-semibold">@Model.PartnerName</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>البريد الإلكتروني:</span>
+                        <span class="text-white fw-semibold">@Model.Email</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>العنوان:</span>
+                        <span class="text-white fw-semibold">@Model.Address</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>شخص للطوارئ:</span>
+                        <span class="text-white fw-semibold">@Model.EmergencyContactName</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>هاتف الطوارئ:</span>
+                        <span class="text-white fw-semibold">@Model.EmergencyContactPhone</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Area - Tabs -->
+        <div class="col-lg-8">
+            <div class="glass-card p-4">
+                <!-- Navigation Tabs -->
+                <ul class="nav nav-tabs border-secondary mb-4" id="customerTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active text-white fw-bold bg-transparent border-0" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab">سجل الحجوزات والرحلات</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link text-white fw-bold bg-transparent border-0 ms-3" id="attachments-tab" data-bs-toggle="tab" data-bs-target="#attachments" type="button" role="tab">المستندات والمرفقات (@attachments.Count())</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link text-white fw-bold bg-transparent border-0 ms-3" id="notes-tab" data-bs-toggle="tab" data-bs-target="#notes" type="button" role="tab">الملاحظات والتعليمات (@notes.Count())</button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="customerTabsContent">
+                    <!-- Tab 1: Bookings History -->
+                    <div class="tab-pane fade show active" id="history" role="tabpanel">
+                        <div class="table-responsive">
+                            <table class="BusinessManagement-table text-nowrap table-hover" style="font-size: 0.85rem;">
+                                        <thead>
+                                            <tr>
+                                                <th>رقم الحجز</th>
+                                                <th>شيت الشريك</th>
+                                                <th>حصة بوابة QR</th>
+                                                <th>تاريخ السفر</th>
+                                                <th>السعر</th>
+                                                <th>المدفوع</th>
+                                                <th>المتبقي</th>
+                                                <th>الحالة</th>
+                                                <th class="text-end">التعديل</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @if (!history.Any())
+                                            {
+                                                <tr>
+                                                    <td colspan="9" class="text-center text-muted py-4">لا توجد حجوزات مسجلة لهذا العميل حالياً.</td>
+                                                </tr>
+                                            }
+                                            else
+                                            {
+                                                foreach (var h in history)
+                                                {
+                                                    <tr>
+                                                        <td class="fw-bold text-white">@h.BookingNumber</td>
+                                                        <td>@h.PartnerName</td>
+                                                        <td>@h.QrStatus</td>
+                                                <td class="text-muted">@h.TravelDate.ToString("dd MMM yyyy")</td>
+                                                <td class="text-white">@h.SellingPrice.ToString("N2")</td>
+                                                <td class="text-success">@h.AmountPaid.ToString("N2")</td>
+                                                <td class="text-warning">@h.RemainingBalance.ToString("N2")</td>
+                                                <td>
+                                                    @if (h.Status == "مسدد بالكامل")
+                                                    {
+                                                        <span class="badge bg-success">مسدد</span>
+                                                    }
+                                                    else if (h.Status == "جزئي")
+                                                    {
+                                                        <span class="badge bg-warning text-dark">جزئي</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-danger">غير مسدد</span>
+                                                    }
+                                                </td>
+                                                <td class="text-end">
+                                                    <a href="/Bookings/Edit/@h.BookingId" class="btn btn-sm btn-outline-secondary">
+                                                        <i class="bi bi-pencil-square"></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tab 2: Attachments -->
+                    <div class="tab-pane fade" id="attachments" role="tabpanel">
+                        <!-- Upload attachment form -->
+                        <form asp-action="UploadAttachment" method="post" enctype="multipart/form-data" class="row g-3 align-items-end mb-4 border-bottom border-secondary pb-4">
+                            <input type="hidden" name="customerId" value="@Model.Id" />
+                            <div class="col-md-8">
+                                <label class="form-label text-secondary small">اختر ملفاً لرفعه (مثال: صورة جواز السفر، التأشيرة، التذكرة)</label>
+                                <input type="file" name="file" class="form-control" required />
+                            </div>
+                            <div class="col-md-4">
+                                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-cloud-upload-fill me-1"></i> رفع المرفق</button>
+                            </div>
+                        </form>
+
+                        <!-- Attachments list -->
+                        <div class="row g-3">
+                            @if (!attachments.Any())
+                            {
+                                <div class="col-12 text-center text-muted py-4">لا توجد مستندات مرفوعة لهذا العميل حالياً.</div>
+                            }
+                            else
+                            {
+                                foreach (var a in attachments)
+                                {
+                                    <div class="col-md-6">
+                                        <div class="p-3 rounded border border-secondary bg-dark bg-opacity-20 d-flex justify-content-between align-items-center">
+                                            <div class="text-truncate me-2" style="max-width: 70%;">
+                                                <h6 class="text-white m-0 small text-truncate" title="@a.FileName">@a.FileName</h6>
+                                                <small class="text-muted" style="font-size: 0.7rem;">@((a.FileSizeBytes / 1024.0).ToString("F1")) KB | @a.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd")</small>
+                                            </div>
+                                            <div class="d-flex gap-2">
+                                                <a href="@a.FilePath" class="btn btn-sm btn-outline-primary" target="_blank" download="@a.FileName" title="تحميل">
+                                                    <i class="bi bi-download"></i>
+                                                </a>
+                                                <form asp-action="DeleteAttachment" method="post" onsubmit="return confirm('هل تريد حذف المرفق؟')">
+                                                    <input type="hidden" name="attachmentId" value="@a.Id" />
+                                                    <input type="hidden" name="customerId" value="@Model.Id" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="حذف">
+                                                        <i class="bi bi-trash-fill"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Tab 3: Notes -->
+                    <div class="tab-pane fade" id="notes" role="tabpanel">
+                        <!-- Add note form -->
+                        <form asp-action="AddNote" method="post" class="mb-4">
+                            <input type="hidden" name="customerId" value="@Model.Id" />
+                            <div class="mb-3">
+                                <label class="form-label text-secondary small">إضافة ملاحظة جديدة</label>
+                                <textarea name="noteText" class="form-control" rows="3" placeholder="اكتب ملاحظة أو توجيه خاص بالعميل هنا..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary px-4 py-2">إضافة الملاحظة</button>
+                        </form>
+
+                        <!-- Notes list timeline -->
+                        <div class="timeline">
+                            @if (!notes.Any())
+                            {
+                                <div class="text-center text-muted py-4">لا توجد ملاحظات مسجلة لهذا العميل.</div>
+                            }
+                            else
+                            {
+                                foreach (var n in notes)
+                                {
+                                    <div class="p-3 rounded border border-secondary mb-3 bg-dark bg-opacity-10 position-relative">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="text-white fw-semibold small"><i class="bi bi-person-fill me-1"></i> @n.CreatedBy</span>
+                                            <span class="text-muted small">@n.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd hh:mm tt")</span>
+                                        </div>
+                                        <p class="text-muted m-0 small" style="white-space: pre-wrap;">@n.NoteText</p>
+                                        
+                                        <form asp-action="DeleteNote" method="post" class="position-absolute top-0 end-0 mt-2 me-2" onsubmit="return confirm('هل تريد حذف هذه الملاحظة؟')">
+                                            <input type="hidden" name="noteId" value="@n.Id" />
+                                            <input type="hidden" name="customerId" value="@Model.Id" />
+                                            <button type="submit" class="btn btn-sm text-danger border-0 bg-transparent p-0" title="حذف">
+                                                <i class="bi bi-trash-fill"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

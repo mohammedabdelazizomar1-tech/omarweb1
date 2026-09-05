@@ -1,0 +1,83 @@
+@model IEnumerable<BusinessManagement.Application.DTOs.AccountDto>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "شجرة ودليل الحسابات المالية";
+}
+
+<div class="container-fluid py-4 text-right">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary pb-3">
+        <div>
+            <h4 class="text-white fw-bold m-0"><i class="bi bi-diagram-3 text-primary me-2"></i> دليل شجرة الحسابات (Chart of Accounts)</h4>
+            <p class="text-muted small m-0">تصفح وتفصيل دليل الحسابات المالية، أصول، خصوم، ملكية، إيرادات ومصروفات.</p>
+        </div>
+        <a href="/Accounting" class="btn btn-outline-secondary btn-sm">العودة للرئيسية الحسابية</a>
+    </div>
+
+    <!-- Accounts Table -->
+    <div class="glass-card p-4">
+        <div class="table-responsive">
+            <table class="BusinessManagement-table text-nowrap table-hover" style="font-size: 0.85rem;">
+                <thead>
+                    <tr>
+                        <th>كود الحساب</th>
+                        <th>اسم الحساب المالي</th>
+                        <th>نوع الحساب</th>
+                        <th class="text-end">الرصيد الدفتري الحالي (Double-Entry Balance)</th>
+                        <th class="text-center">حالة الحساب</th>
+                        <th class="text-end">دفتر الأستاذ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var a in Model)
+                    {
+                        <tr>
+                            <td class="fw-bold font-monospace">@a.AccountCode</td>
+                            <td class="fw-semibold text-white">@a.Name</td>
+                            <td>
+                                @if (a.Type == "Asset")
+                                {
+                                    <span class="badge bg-primary bg-opacity-10 text-primary">أصول (Asset)</span>
+                                }
+                                else if (a.Type == "Liability")
+                                {
+                                    <span class="badge bg-danger bg-opacity-10 text-danger">خصوم (Liability)</span>
+                                }
+                                else if (a.Type == "Equity")
+                                {
+                                    <span class="badge bg-warning bg-opacity-10 text-warning">حقوق ملكية (Equity)</span>
+                                }
+                                else if (a.Type == "Revenue")
+                                {
+                                    <span class="badge bg-success bg-opacity-10 text-success">إيرادات (Revenue)</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-info bg-opacity-10 text-info">مصروفات (Expense)</span>
+                                }
+                            </td>
+                            <td class="text-end fw-bold @(a.CurrentBalance < 0 ? "text-danger" : "text-white")">
+                                @a.CurrentBalance.ToString("N2") ج.م
+                            </td>
+                            <td class="text-center">
+                                @if (a.IsActive)
+                                {
+                                    <span class="badge-status delivered">نشط</span>
+                                }
+                                else
+                                {
+                                    <span class="badge-status secondary">معطل</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <a href="/Accounting/Ledger?accountId=@a.Id" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye-fill"></i> كشف الأستاذ
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

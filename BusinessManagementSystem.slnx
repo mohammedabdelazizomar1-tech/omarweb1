@@ -1,8 +1,11 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/Bms.Application/Bms.Application.csproj" />
-    <Project Path="src/Bms.Domain/Bms.Domain.csproj" />
-    <Project Path="src/Bms.Infrastructure/Bms.Infrastructure.csproj" />
-    <Project Path="src/Bms.Web/Bms.Web.csproj" />
+    <Project Path="src/BusinessManagement.Domain/BusinessManagement.Domain.csproj" />
+    <Project Path="src/BusinessManagement.Shared/BusinessManagement.Shared.csproj" />
+    <Project Path="src/BusinessManagement.Application/BusinessManagement.Application.csproj" />
+    <Project Path="src/BusinessManagement.Persistence/BusinessManagement.Persistence.csproj" />
+    <Project Path="src/BusinessManagement.Infrastructure/BusinessManagement.Infrastructure.csproj" />
+    <Project Path="src/BusinessManagement.Web/BusinessManagement.Web.csproj" />
+    <Project Path="src/BusinessManagement.Tests/BusinessManagement.Tests.csproj" />
   </Folder>
 </Solution>

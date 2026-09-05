@@ -3,6 +3,10 @@
 .vscode/
 bin/
 obj/
+publish/
+**/publish/
+logs/
+**/logs/
 *.user
 *.suo
 *.userosscache

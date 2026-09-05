@@ -1,0 +1,451 @@
+@model IEnumerable<BusinessManagement.Application.DTOs.BookingDto>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "دفتر حجوزات المسافرين";
+}
+
+<div class="glass-card p-4">
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+        <div>
+            <h5 class="text-white fw-bold m-0">الدليل الرئيسي لحجوزات المسافرين</h5>
+            <p class="text-muted small m-0">إدارة ملفات التأشيرات وتذاكر الطيران ومستخلصات الحسابات المالية عبر الشركاء</p>
+        </div>
+        
+        <div class="d-flex align-items-center gap-2 flex-nowrap text-nowrap">
+            <div class="input-group" style="width: 170px; flex-shrink: 0;">
+                <span class="input-group-text bg-transparent border-end-0" style="border-color: var(--border-color); color: var(--text-secondary);">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text" id="bookingSearch" class="form-control border-start-0" placeholder="ابحث عن مسافر..." autocomplete="off" style="font-size: 0.85rem;" />
+            </div>
+            
+            <!-- Group Filter -->
+            <select id="groupFilter" class="form-select" style="width: 120px; font-size: 0.85rem; border-color: var(--border-color); height: 38px; flex-shrink: 0;">
+                <option value="">كل المجموعات</option>
+                @foreach (var g in Model.Where(x => !string.IsNullOrEmpty(x.GroupNumber)).Select(x => x.GroupNumber).Distinct())
+                {
+                    <option value="@g">@g</option>
+                }
+            </select>
+
+            <!-- Partner Filter -->
+            <select id="partnerFilter" class="form-select" style="width: 120px; font-size: 0.85rem; border-color: var(--border-color); height: 38px; flex-shrink: 0;">
+                <option value="">كل الشركاء</option>
+                @foreach (var pName in Model.Select(x => x.PartnerName).Distinct())
+                {
+                    <option value="@pName">شيت: @pName</option>
+                }
+            </select>
+
+            <!-- Gateway (QR) Filter -->
+            <select id="qrFilter" class="form-select" style="width: 110px; font-size: 0.85rem; border-color: var(--border-color); height: 38px; flex-shrink: 0;">
+                <option value="">كل البوابات</option>
+                <option value="with-qr">بـ QR</option>
+                <option value="no-qr">بدون QR</option>
+            </select>
+            <a href="javascript:void(0)" onclick="exportTableToExcel('bookingsTable', 'دفتر_حجوزات_المسافرين')" class="btn btn-outline-success" style="font-size: 0.85rem; height: 38px; display: inline-flex; align-items: center; white-space: nowrap; flex-shrink: 0;">
+                <i class="bi bi-file-earmark-excel me-1"></i> تصدير Excel
+            </a>
+            <a href="javascript:void(0)" onclick="printDisplayedBookings()" class="btn btn-outline-primary" style="font-size: 0.85rem; height: 38px; display: inline-flex; align-items: center; white-space: nowrap; flex-shrink: 0;">
+                <i class="bi bi-printer me-1"></i> طباعة الإيصالات جماعياً
+            </a>
+            
+            <a href="/Bookings/Create" class="btn btn-primary" style="font-size: 0.85rem; height: 38px; display: inline-flex; align-items: center; white-space: nowrap; flex-shrink: 0;">
+                <i class="bi bi-file-earmark-plus-fill me-2"></i> تسجيل حجز جديد
+            </a>
+        </div>
+    </div>
+
+    <!-- Spreadsheet Scroll wrapper -->
+    <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
+        <table class="BusinessManagement-table text-nowrap table-hover" id="bookingsTable" style="font-size: 0.85rem;">
+            <thead class="sticky-top bg-light" style="z-index: 1;">
+                <tr>
+                    <th>رقم الملف</th>
+                    <th>المجموعة</th>
+                    <th>اسم المسافر</th>
+                    <th>جواز السفر</th>
+                    <th>التبعية (شيت)</th>
+                    <th class="text-end">نت (المنصة)</th>
+                    <th class="text-end">باركود</th>
+                    <th class="text-end">الشركة</th>
+                    <th class="text-end">المطار</th>
+                    <th class="text-end">البرنامج</th>
+                    <th class="text-end">تذكرة الطيران</th>
+                    <th class="text-end">الباص</th>
+                    <th class="text-end fw-bold">إجمالي التكلفة</th>
+                    <th class="text-end fw-bold text-info">سعر البيع</th>
+                    <th class="text-end fw-bold text-success">صافي الربح</th>
+                    <th class="text-end text-success">المدفوع</th>
+                    <th class="text-end text-warning">المتبقي</th>
+                    <th class="text-center">البوابة</th>
+                    <th>العمليات</th>
+                </tr>
+                <!-- Dynamic Summary Row for Sums -->
+                <tr id="summaryRow" style="background-color: rgba(59, 130, 246, 0.12); border-bottom: 2px solid rgba(59, 130, 246, 0.4);">
+                    <td colspan="12" class="text-start fw-bold text-info py-2 px-3"><i class="bi bi-calculator me-1"></i> إجمالي الحجوزات المعروضة:</td>
+                    <td id="sumTotalCost" class="text-end fw-bold text-white py-2">0.00 ج.م</td>
+                    <td id="sumSellingPrice" class="text-end fw-bold text-info py-2">0.00 ج.م</td>
+                    <td id="sumNetProfit" class="text-end fw-bold text-success py-2">0.00 ج.م</td>
+                    <td id="sumPaymentsCollected" class="text-end fw-bold text-success py-2">0.00 ج.م</td>
+                    <td id="sumRemainingBalance" class="text-end fw-bold text-warning py-2">0.00 ج.م</td>
+                    <td colspan="2"></td>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model == null || !Model.Any())
+                {
+                    <tr>
+                        <td colspan="19" class="text-center text-muted py-5">لا توجد سجلات حجز مسافرين مسجلة حالياً.</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var b in Model)
+                    {
+                        <tr class="booking-row" data-id="@b.Id" data-group="@b.GroupNumber" data-partner="@b.PartnerName" data-qr="@(b.HasQrCode ? "with-qr" : "no-qr")">
+                            <td class="fw-bold text-white">@b.BookingNumber</td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(b.GroupNumber))
+                                {
+                                    <span class="badge bg-primary text-white py-1 px-2 rounded-pill" style="font-size: 0.75rem; font-weight: 600; background-color: rgba(59, 130, 246, 0.2) !important; border: 1px solid rgba(59, 130, 246, 0.4); color: #60a5fa !important;">
+                                        <i class="bi bi-people-fill me-1"></i>@b.GroupNumber
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td class="fw-semibold text-white" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis;">@b.PassengerName</td>
+                            <td class="font-monospace">@b.PassengerPassport</td>
+                            <td>شيت: @b.PartnerName</td>
+                            <td class="text-end">@b.NetCost.ToString("N2") ج.م</td>
+                            <td class="text-end">@b.BarcodeCost.ToString("N2") ج.م</td>
+                            <td class="text-end">@b.CompanyCost.ToString("N2") ج.م</td>
+                            <td class="text-end">@b.AirportCost.ToString("N2") ج.م</td>
+                            <td class="text-end">@b.ProgramCost.ToString("N2") ج.م</td>
+                            <td class="text-end">@b.TicketCost.ToString("N2") ج.م</td>
+                            <td class="text-end">@b.BusCost.ToString("N2") ج.م</td>
+                            <td class="text-end fw-bold text-white">@b.TotalCost.ToString("N2") ج.م</td>
+                            <td class="text-end fw-bold text-info">@b.SellingPrice.ToString("N2") ج.م</td>
+                            <td class="text-end fw-bold text-success">@b.NetProfit.ToString("N2") ج.م</td>
+                            <td class="text-end text-success">@b.PaymentsCollected.ToString("N2") ج.م</td>
+                            <td class="text-end text-warning fw-semibold">
+                                @if (b.RemainingBalance > 0)
+                                {
+                                    <span>@b.RemainingBalance.ToString("N2") ج.م</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                @if (b.HasQrCode)
+                                {
+                                    <span class="badge-status delivered">بـ QR</span>
+                                }
+                                else
+                                {
+                                    <span class="badge-status secondary">بدون QR</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-1">
+                                    <button class="btn btn-sm btn-outline-success" onclick="openPaymentsModal('@b.Id')" data-bs-toggle="tooltip" title="تسجيل الدفعات والتسديد">
+                                        <i class="bi bi-wallet2"></i>
+                                    </button>
+                                    <a href="/Bookings/Print/@b.Id" target="_blank" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="طباعة الفاتورة والملف">
+                                        <i class="bi bi-printer"></i>
+                                    </a>
+                                    <a href="/Bookings/Edit/@b.Id" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="تعديل تفاصيل الملف">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteBooking('@b.Id', '@b.PassengerName')" data-bs-toggle="tooltip" title="حذف سجل الحجز">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Booking Payments Manager Modal -->
+<div class="modal fade" id="paymentsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" id="modalPlaceholder">
+        <!-- Content will be injected dynamically via AJAX -->
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Client-side search and dropdown filters
+        function applyFilters() {
+            const query = document.getElementById("bookingSearch").value.toLowerCase();
+            const selectedGroup = document.getElementById("groupFilter").value;
+            const selectedPartner = document.getElementById("partnerFilter").value;
+            const selectedQr = document.getElementById("qrFilter").value;
+
+            const rows = document.querySelectorAll(".booking-row");
+
+            rows.forEach(row => {
+                const groupAttr = row.getAttribute("data-group") || "";
+                const partnerAttr = row.getAttribute("data-partner") || "";
+                const qrAttr = row.getAttribute("data-qr") || "";
+                const textContent = row.textContent.toLowerCase();
+
+                const matchesQuery = !query || textContent.includes(query);
+                const matchesGroup = !selectedGroup || groupAttr === selectedGroup;
+                const matchesPartner = !selectedPartner || partnerAttr === selectedPartner;
+                const matchesQr = !selectedQr || qrAttr === selectedQr;
+
+                if (matchesQuery && matchesGroup && matchesPartner && matchesQr) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            });
+
+            recalculateSummaryRow();
+        }
+
+        function printDisplayedBookings() {
+            const visibleRows = Array.from(document.querySelectorAll(".booking-row")).filter(row => row.style.display !== "none");
+            if (visibleRows.length === 0) {
+                if (window.BusinessManagementAlert) {
+                    BusinessManagementAlert("لا توجد حجوزات معروضة حالياً للطباعة.", "warning");
+                } else {
+                    alert("لا توجد حجوزات معروضة حالياً للطباعة.");
+                }
+                return;
+            }
+            const ids = visibleRows.map(row => row.getAttribute("data-id")).join(",");
+            window.open(`/Bookings/PrintBulk?ids=${ids}`, '_blank');
+        }
+
+        function recalculateSummaryRow() {
+            let totalCost = 0;
+            let sellingPrice = 0;
+            let netProfit = 0;
+            let paymentsCollected = 0;
+            let remainingBalance = 0;
+
+            const visibleRows = Array.from(document.querySelectorAll(".booking-row")).filter(row => row.style.display !== "none");
+
+            visibleRows.forEach(row => {
+                const cells = row.querySelectorAll("td");
+                if (cells.length >= 17) {
+                    const costVal = parseCurrencyText(cells[12].textContent);
+                    const priceVal = parseCurrencyText(cells[13].textContent);
+                    const profitVal = parseCurrencyText(cells[14].textContent);
+                    const paidVal = parseCurrencyText(cells[15].textContent);
+                    const remainingVal = parseCurrencyText(cells[16].textContent);
+
+                    totalCost += costVal;
+                    sellingPrice += priceVal;
+                    netProfit += profitVal;
+                    paymentsCollected += paidVal;
+                    remainingBalance += remainingVal;
+                }
+            });
+
+            document.getElementById("sumTotalCost").textContent = formatCurrencyText(totalCost);
+            document.getElementById("sumSellingPrice").textContent = formatCurrencyText(sellingPrice);
+            document.getElementById("sumNetProfit").textContent = formatCurrencyText(netProfit);
+            document.getElementById("sumPaymentsCollected").textContent = formatCurrencyText(paymentsCollected);
+            
+            const remainingEl = document.getElementById("sumRemainingBalance");
+            if (remainingEl) {
+                remainingEl.textContent = formatCurrencyText(remainingBalance);
+                if (remainingBalance > 0) {
+                    remainingEl.className = "text-end fw-bold text-warning py-2";
+                } else {
+                    remainingEl.className = "text-end fw-bold text-muted py-2";
+                }
+            }
+        }
+
+        function parseCurrencyText(text) {
+            if (!text || text.trim() === "-") return 0;
+            const cleaned = text.replace(/,/g, '').replace(/[^\d.-]/g, '');
+            return parseFloat(cleaned) || 0;
+        }
+
+        function formatCurrencyText(value) {
+            return `${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ج.م`;
+        }
+
+        // Bind filter event listeners on DOMContentLoaded
+        document.addEventListener("DOMContentLoaded", () => {
+            document.getElementById("bookingSearch").addEventListener("input", applyFilters);
+            document.getElementById("groupFilter").addEventListener("change", applyFilters);
+            document.getElementById("partnerFilter").addEventListener("change", applyFilters);
+            document.getElementById("qrFilter").addEventListener("change", applyFilters);
+            
+            // Calculate sums on page load
+            recalculateSummaryRow();
+        });
+
+        // AJAX payments modal orchestrator
+        async function openPaymentsModal(bookingId) {
+            try {
+                const placeholder = document.getElementById("modalPlaceholder");
+                placeholder.innerHTML = `<div class="p-5 text-center text-white"><div class="spinner-border text-primary" role="status"></div><div class="mt-2">جاري تحميل سجل الدفعات...</div></div>`;
+                
+                const myModal = new bootstrap.Modal(document.getElementById('paymentsModal'));
+                myModal.show();
+
+                const html = await BusinessManagementAjax(`/Bookings/Payments?bookingId=${bookingId}`, "GET");
+                placeholder.innerHTML = html;
+            } catch (error) {
+                console.error("Failed to load payments modal:", error);
+                BusinessManagementAlert("فشل تحميل سجل الدفعات", "danger");
+            }
+        }
+
+        function refreshBookingsPage() {
+            setTimeout(() => location.reload(), 1500);
+        }
+
+        async function submitPayment(e) {
+            e.preventDefault();
+            const form = document.getElementById("addPaymentForm");
+            const formData = new FormData(form);
+
+            try {
+                const result = await BusinessManagementAjax("/Bookings/AddPayment", "POST", formData);
+                if (result.success) {
+                    BusinessManagementAlert("تم تسجيل الدفعة وإيداعها بالخزينة بنجاح!");
+                    
+                    // Reload modal content
+                    const bookingId = formData.get("bookingId");
+                    const placeholder = document.getElementById("modalPlaceholder");
+                    const paymentsHtml = await BusinessManagementAjax(`/Bookings/Payments?bookingId=${bookingId}`, "GET");
+                    placeholder.innerHTML = paymentsHtml;
+                    
+                    refreshBookingsPage();
+                } else {
+                    BusinessManagementAlert(result.message || "فشل تسجيل الدفعة المالية.", "danger");
+                }
+            } catch (error) {
+                console.error(error);
+                BusinessManagementAlert("حدث خطأ أثناء الاتصال بالخادم.", "danger");
+            }
+        }
+
+        async function deletePayment(paymentId) {
+            if (window.Swal) {
+                const swalResult = await Swal.fire({
+                    title: 'تأكيد تراجع الدفعة',
+                    text: 'هل أنت متأكد من حذف وتراجع هذه الدفعة وإلغائها من الخزينة؟',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'نعم، احذف وتراجع',
+                    cancelButtonText: 'إلغاء',
+                    customClass: {
+                        popup: 'bms-swal-confirm',
+                        confirmButton: 'btn btn-danger',
+                        cancelButton: 'btn btn-outline-secondary'
+                    },
+                    buttonsStyling: false
+                });
+
+                if (!swalResult.isConfirmed) return;
+            } else {
+                if (!confirm("هل أنت متأكد من حذف وتراجع هذه الدفعة وإلغائها من الخزينة؟")) return;
+            }
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            const formData = new FormData();
+            formData.append("paymentId", paymentId);
+            formData.append("__RequestVerificationToken", token);
+
+            try {
+                const result = await BusinessManagementAjax("/Bookings/DeletePayment", "POST", formData);
+                if (result.success) {
+                    BusinessManagementAlert("تم حذف الدفعة وتصحيح رصيد الخزينة بنجاح!", "danger");
+
+                    // Reload modal
+                    const bookingId = document.getElementById('modalBookingId').value;
+                    const placeholder = document.getElementById("modalPlaceholder");
+                    const paymentsHtml = await BusinessManagementAjax(`/Bookings/Payments?bookingId=${bookingId}`, "GET");
+                    placeholder.innerHTML = paymentsHtml;
+
+                    refreshBookingsPage();
+                } else {
+                    BusinessManagementAlert(result.message || "فشل حذف الدفعة وتعديل الخزينة.", "danger");
+                }
+            } catch (error) {
+                console.error(error);
+                BusinessManagementAlert("حدث خطأ أثناء الاتصال بالخادم.", "danger");
+            }
+        }
+
+        function toggleAccountField(val) {
+            const wrapper = document.getElementById("accountFieldWrapper");
+            const input = document.getElementById("accountDetailInput");
+            if (!wrapper || !input) return;
+
+            if (val === "BankTransfer") {
+                wrapper.style.display = "";
+                input.placeholder = "أدخل رقم الحساب البنكي المحول إليه أو اسم البنك... *";
+                input.required = true;
+            } else if (val === "VodafoneCash") {
+                wrapper.style.display = "";
+                input.placeholder = "أدخل رقم المحفظة الإلكترونية المستلمة (فودافون كاش وغيرها)... *";
+                input.required = true;
+            } else if (val === "InstaPay") {
+                wrapper.style.display = "";
+                input.placeholder = "أدخل عنوان InstaPay (InstaPay IPA / Address)... *";
+                input.required = true;
+            } else {
+                wrapper.style.display = "none";
+                input.value = "";
+                input.required = false;
+            }
+        }
+
+        // AJAX deletion
+        async function deleteBooking(id, travelerName) {
+            if (window.Swal) {
+                const swalResult = await Swal.fire({
+                    title: 'تأكيد حذف الحجز',
+                    text: `هل أنت متأكد من حذف وأرشفة ملف حجز المسافر '${travelerName}'؟`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'نعم، احذف الحجز',
+                    cancelButtonText: 'إلغاء',
+                    customClass: {
+                        popup: 'bms-swal-confirm',
+                        confirmButton: 'btn btn-danger',
+                        cancelButton: 'btn btn-outline-secondary'
+                    },
+                    buttonsStyling: false
+                });
+
+                if (!swalResult.isConfirmed) return;
+            } else {
+                if (!confirm(`هل أنت متأكد من حذف ملف حجز المسافر '${travelerName}'؟`)) {
+                    return;
+                }
+            }
+
+            try {
+                const result = await BusinessManagementAjax(`/Bookings/Delete/${id}`, "POST");
+                if (result.success) {
+                    BusinessManagementAlert(result.message, "success");
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    BusinessManagementAlert(result.message, "danger");
+                }
+            } catch (error) {
+                console.error("Failed to delete booking:", error);
+            }
+        }
+    </script>
+}

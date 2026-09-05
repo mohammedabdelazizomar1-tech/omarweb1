@@ -1,0 +1,125 @@
+@model BusinessManagement.Application.DTOs.UserDto
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "الملف الشخصي";
+}
+
+<div class="container-fluid py-4 text-right">
+    <div class="row g-4">
+        <!-- Sidebar - Avatar Card -->
+        <div class="col-lg-4">
+            <div class="glass-card p-4 text-center">
+                <div class="position-relative d-inline-block mb-3">
+                    <img src="@(string.IsNullOrEmpty(Model.ProfilePictureUrl) ? "/images/default-avatar.png" : Model.ProfilePictureUrl)" 
+                         alt="Avatar" class="rounded-circle border border-primary border-3 shadow" 
+                         style="width: 150px; height: 150px; object-fit: cover;" 
+                         onerror="this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png'" />
+                </div>
+                <h5 class="text-white fw-bold m-0">@Model.FullName</h5>
+                <p class="text-primary small mb-2">@Model.Role.ToString()</p>
+                <div class="badge bg-secondary mb-3">@Model.DepartmentName</div>
+                
+                <hr class="border-secondary mb-3" />
+                
+                <div class="text-muted small text-start">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>اسم المستخدم:</span>
+                        <span class="text-white fw-semibold">@Model.Username</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>تاريخ الانضمام:</span>
+                        <span class="text-white fw-semibold">@Model.CreatedAt.ToString("yyyy-MM-dd")</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>حالة البريد:</span>
+                        @if (Model.EmailConfirmed)
+                        {
+                            <span class="text-success fw-bold"><i class="bi bi-patch-check-fill me-1"></i> مفعل</span>
+                        }
+                        else
+                        {
+                            <span class="text-warning fw-bold"><i class="bi bi-exclamation-triangle-fill me-1"></i> غير مفعل</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content - Tabs -->
+        <div class="col-lg-8">
+            @if (ViewBag.SuccessMessage != null)
+            {
+                <div class="alert alert-success border-0 small mb-4 py-2" style="background-color: rgba(16, 185, 129, 0.1); color: #34d399;">
+                    @ViewBag.SuccessMessage
+                </div>
+            }
+            @if (ViewBag.ErrorMessage != null)
+            {
+                <div class="alert alert-danger border-0 small mb-4 py-2" style="background-color: rgba(239, 68, 68, 0.1); color: #f87171;">
+                    @ViewBag.ErrorMessage
+                </div>
+            }
+
+            <div class="glass-card p-4">
+                <!-- Navigation Tabs -->
+                <ul class="nav nav-tabs border-secondary mb-4" id="profileTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active text-white fw-bold bg-transparent border-0" id="edit-tab" data-bs-toggle="tab" data-bs-target="#edit-profile" type="button" role="tab">تعديل الملف الشخصي</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link text-white fw-bold bg-transparent border-0 ms-3" id="password-tab" data-bs-toggle="tab" data-bs-target="#change-password" type="button" role="tab">تغيير كلمة المرور</button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="profileTabsContent">
+                    <!-- Tab 1: Edit Profile -->
+                    <div class="tab-pane fade show active" id="edit-profile" role="tabpanel">
+                        <form asp-action="Update" method="post" enctype="multipart/form-data">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label text-secondary small">الاسم الأول</label>
+                                    <input type="text" name="firstName" class="form-control" value="@Model.FirstName" required />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-secondary small">اسم العائلة</label>
+                                    <input type="text" name="lastName" class="form-control" value="@Model.LastName" required />
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label text-secondary small">البريد الإلكتروني</label>
+                                    <input type="email" class="form-control" value="@Model.Email" readonly disabled />
+                                    <span class="text-muted" style="font-size: 0.75rem;">البريد الإلكتروني غير قابل للتعديل للتأمين.</span>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label text-secondary small">الصورة الشخصية (Avatar)</label>
+                                    <input type="file" name="profilePicture" class="form-control" accept="image/*" />
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary mt-4 px-4 py-2">حفظ التغييرات</button>
+                        </form>
+                    </div>
+
+                    <!-- Tab 2: Change Password -->
+                    <div class="tab-pane fade" id="change-password" role="tabpanel">
+                        <form asp-action="ChangePassword" method="post">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label text-secondary small">كلمة المرور الحالية</label>
+                                    <input type="password" name="currentPassword" class="form-control" placeholder="******" required />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-secondary small">كلمة المرور الجديدة</label>
+                                    <input type="password" name="newPassword" class="form-control" placeholder="******" required />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-secondary small">تأكيد كلمة المرور الجديدة</label>
+                                    <input type="password" name="confirmPassword" class="form-control" placeholder="******" required />
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary mt-4 px-4 py-2">تحديث كلمة المرور</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

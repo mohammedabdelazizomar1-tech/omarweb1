@@ -1,0 +1,115 @@
+@model BusinessManagement.Application.DTOs.BalanceSheetDto
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "الميزانية العمومية";
+    string asOfDate = ViewBag.AsOfDate;
+}
+
+<div class="container-fluid py-4 text-right" style="max-width: 800px;">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary pb-3">
+        <div>
+            <h4 class="text-white fw-bold m-0"><i class="bi bi-balance-scale text-primary me-2"></i> الميزانية العمومية (Balance Sheet)</h4>
+            <p class="text-muted small m-0">بيان تفصيلي بمركز الشركة المالي (الأصول مقابل الخصوم وحقوق الملكية).</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button onclick="window.print();" class="btn btn-outline-info btn-sm"><i class="bi bi-printer"></i> طباعة</button>
+            <a href="/Accounting" class="btn btn-outline-secondary btn-sm">العودة</a>
+        </div>
+    </div>
+
+    <!-- Date Picker -->
+    <div class="glass-card p-3 mb-4 no-print">
+        <form method="get" action="/Accounting/BalanceSheet" class="row g-3 align-items-end">
+            <div class="col-md-9">
+                <label class="form-label text-secondary small">حتى تاريخ (As of date)</label>
+                <input type="date" name="asOfDate" value="@asOfDate" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel-fill"></i> تطبيق</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Balance Sheet Document -->
+    <div class="glass-card p-4 shadow">
+        <div class="text-center mb-4 pb-3 border-bottom border-secondary">
+            <h5 class="text-white fw-bold">شركة خدمات الحج والعمرة والسياحة</h5>
+            <span class="text-muted small">الميزانية العمومية كما هي في تاريخ <strong>@asOfDate</strong></span>
+        </div>
+
+        <div class="row g-4">
+            <!-- Left Side: Assets -->
+            <div class="col-md-6 border-start border-secondary">
+                <h6 class="text-primary fw-bold mb-3 border-bottom border-secondary pb-1">الأصول (Assets)</h6>
+                <div class="d-flex flex-column gap-2">
+                    @foreach (var a in Model.AssetAccounts)
+                    {
+                        <div class="d-flex justify-content-between text-muted small px-2">
+                            <span>@a.Name</span>
+                            <span class="text-white fw-semibold">@a.CurrentBalance.ToString("N2") ج.م</span>
+                        </div>
+                    }
+                    <div class="d-flex justify-content-between fw-bold text-success border-top border-secondary pt-2 px-2 mt-3">
+                        <span>إجمالي الأصول</span>
+                        <span>@Model.TotalAssets.ToString("N2") ج.م</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Liabilities & Equity -->
+            <div class="col-md-6">
+                <!-- Liabilities -->
+                <h6 class="text-danger fw-bold mb-3 border-bottom border-secondary pb-1">الالتزامات / الخصوم (Liabilities)</h6>
+                <div class="d-flex flex-column gap-2 mb-4">
+                    @foreach (var l in Model.LiabilityAccounts)
+                    {
+                        <div class="d-flex justify-content-between text-muted small px-2">
+                            <span>@l.Name</span>
+                            <span class="text-white fw-semibold">@l.CurrentBalance.ToString("N2") ج.م</span>
+                        </div>
+                    }
+                    <div class="d-flex justify-content-between fw-bold text-danger border-top border-secondary pt-2 px-2">
+                        <span>إجمالي الالتزامات</span>
+                        <span>@Model.TotalLiabilities.ToString("N2") ج.م</span>
+                    </div>
+                </div>
+
+                <!-- Equity -->
+                <h6 class="text-warning fw-bold mb-3 border-bottom border-secondary pb-1">حقوق الملكية (Equity)</h6>
+                <div class="d-flex flex-column gap-2">
+                    @foreach (var eq in Model.EquityAccounts)
+                    {
+                        <div class="d-flex justify-content-between text-muted small px-2">
+                            <span>@eq.Name</span>
+                            <span class="text-white fw-semibold">@eq.CurrentBalance.ToString("N2") ج.م</span>
+                        </div>
+                    }
+                    <div class="d-flex justify-content-between fw-bold text-warning border-top border-secondary pt-2 px-2">
+                        <span>إجمالي حقوق الملكية</span>
+                        <span>@Model.TotalEquity.ToString("N2") ج.م</span>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between fw-bold text-white border-top border-secondary pt-3 px-2 mt-4" style="border-top-width: 2px !important;">
+                    <span>إجمالي الخصوم وحقوق الملكية</span>
+                    <span class="@(Math.Abs(Model.TotalAssets - Model.TotalLiabilitiesAndEquity) > 0.01m ? "text-danger" : "text-success")">
+                        @Model.TotalLiabilitiesAndEquity.ToString("N2") ج.م
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Verification HUD -->
+        <div class="mt-4 pt-3 border-top border-secondary text-center">
+            @if (Math.Abs(Model.TotalAssets - Model.TotalLiabilitiesAndEquity) < 0.01m)
+            {
+                <span class="badge bg-success p-2"><i class="bi bi-check-circle-fill me-1"></i> الميزانية متوازنة تماماً (الأصول = الخصوم + حقوق الملكية)</span>
+            }
+            else
+            {
+                <span class="badge bg-danger p-2"><i class="bi bi-exclamation-triangle-fill me-1"></i> الميزانية غير متوازنة! الفارق: @(Math.Abs(Model.TotalAssets - Model.TotalLiabilitiesAndEquity).ToString("N2")) ج.م</span>
+            }
+        </div>
+    </div>
+</div>

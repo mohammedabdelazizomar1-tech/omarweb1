@@ -1,0 +1,198 @@
+@using System.Security.Claims
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - نظام إدارة الأعمال</title>
+    <script nonce="@Context.Items["ScriptNonce"]">
+        (function () {
+            const theme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
+    
+    <!-- Local Bootstrap Core Styles -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.rtl.min.css" />
+    
+    <!-- Icons (Bootstrap Icons CDN) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    
+    <!-- Premium Obsidian Dark Theme Styles -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/BusinessManagement.Web.styles.css" asp-append-version="true" />
+    
+
+
+    <!-- SweetAlert2 (Premium Modern Alerts) -->
+    <script nonce="@Context.Items["ScriptNonce"]" src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- CSRF Anti-Forgery Token for ES6 AJAX calls -->
+    @Html.AntiForgeryToken()
+</head>
+<body>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <!-- Sidebar Navigation -->
+        <aside class="BusinessManagement-sidebar">
+            <a href="/" class="BusinessManagement-brand">
+                <i class="bi bi-grid-1x2-fill"></i>
+                <span>بوابة المسافرين</span>
+            </a>
+            
+            <nav class="sidebar-nav">
+                <a href="/" class="nav-item-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard" ? "active" : "")">
+                    <i class="bi bi-speedometer2"></i>
+                    لوحة التحكم
+                </a>
+                
+                @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+                {
+                    <a href="/Users" class="nav-item-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Users" ? "active" : "")">
+                        <i class="bi bi-people-fill"></i>
+                        دليل الموظفين
+                    </a>
+                }
+                
+                <a href="/Bookings" class="nav-item-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Bookings" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">
+                    <i class="bi bi-journal-text"></i>
+                    حجوزات المسافرين
+                </a>
+
+                <a href="/Customers" class="nav-item-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Customers" ? "active" : "")">
+                    <i class="bi bi-person-rolodex"></i>
+                    بيانات المسافرين (CRM)
+                </a>
+                
+                @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+                {
+                    <a href="/Accounting" class="nav-item-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Accounting" ? "active" : "")">
+                        <i class="bi bi-bank"></i>
+                        الحسابات العامة والقيود
+                    </a>
+                }
+
+                <a href="/Safe" class="nav-item-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Safe" ? "active" : "")">
+                    <i class="bi bi-wallet2"></i>
+                    خزينة المعاملات المالية
+                </a>
+
+                <a href="/Reports" class="nav-item-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Reports" ? "active" : "")">
+                    <i class="bi bi-file-earmark-bar-graph"></i>
+                    مركز التقارير الشامل
+                </a>
+                
+                <a href="/Portal" class="nav-item-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Portal" ? "active" : "")">
+                    <i class="bi bi-globe-americas"></i>
+                    بوابات التأشيرات (BW)
+                </a>
+                
+                <a href="/Partnership" class="nav-item-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Partnership" ? "active" : "")">
+                    <i class="bi bi-shield-check"></i>
+                    رأس مال الشركاء (الضمان)
+                </a>
+
+                <a href="/ExternalVisas" class="nav-item-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "ExternalVisas" ? "active" : "")">
+                    <i class="bi bi-airplane-fill"></i>
+                    تأشيرات خارجي
+                </a>
+
+                @if (User.IsInRole("Admin"))
+                {
+                    <a href="/DatabaseManagement" class="nav-item-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "DatabaseManagement" ? "active" : "")">
+                        <i class="bi bi-database-fill-gear text-danger"></i>
+                        إدارة قاعدة البيانات
+                    </a>
+                }
+            </nav>
+            
+            <div class="BusinessManagement-user-profile mt-auto">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; font-weight: 600;">
+                        @User.FindFirst(ClaimTypes.GivenName)?.Value?[0]
+                    </div>
+                    <div style="line-height: 1.2;">
+                        <div class="fw-semibold text-white" style="font-size: 0.9rem;">@User.Identity.Name</div>
+                        <small class="text-muted" style="font-size: 0.75rem;">@User.FindFirst(ClaimTypes.Role)?.Value</small>
+                    </div>
+                </div>
+                <a href="/Account/Logout" class="text-danger" data-bs-toggle="tooltip" title="تسجيل الخروج">
+                    <i class="bi bi-box-arrow-right" style="font-size: 1.25rem;"></i>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Wrapper content -->
+        <div class="BusinessManagement-main-content">
+            <header class="content-header glass-card p-3 mb-4 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-outline-secondary d-lg-none" id="sidebarToggle">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <h4 class="text-white fw-bold m-0">@ViewData["PageHeader"]</h4>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-link p-1 text-decoration-none border-0" id="theme-toggle-btn" onclick="toggleTheme()" title="تغيير المظهر (داكن / فاتح)" style="box-shadow: none;">
+                        <i id="theme-toggle-icon" class="bi bi-moon-fill fs-5 text-secondary"></i>
+                    </button>
+                    <div class="text-muted small">
+                        <i class="bi bi-clock-history me-1"></i> @DateTime.UtcNow.ToString("dd MMM yyyy")
+                    </div>
+                </div>
+            </header>
+            
+            <main role="main">
+                @RenderBody()
+            </main>
+        </div>
+    }
+    else
+    {
+        <!-- Anonymous Layout (Login/Access Denied) -->
+        <main role="main">
+            @RenderBody()
+        </main>
+    }
+
+    <!-- Core Local JavaScript Scripts -->
+    <script nonce="@Context.Items["ScriptNonce"]" src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script nonce="@Context.Items["ScriptNonce"]" src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- JQuery Validation & Unobtrusive Scripts -->
+    <script nonce="@Context.Items["ScriptNonce"]" src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script nonce="@Context.Items["ScriptNonce"]" src="~/lib/jquery-validation-unobtrusive/dist/jquery.validate.unobtrusive.min.js"></script>
+    
+    <!-- ES6 AJAX & UI Utility Helpers -->
+    <script nonce="@Context.Items["ScriptNonce"]" src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script nonce="@Context.Items["ScriptNonce"]" src="~/js/site.js" asp-append-version="true"></script>
+    
+    <script nonce="@Context.Items["ScriptNonce"]">
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        }
+        function updateThemeIcon(theme) {
+            const icon = document.getElementById('theme-toggle-icon');
+            if (icon) {
+                if (theme === 'dark') {
+                    icon.className = 'bi bi-sun-fill text-warning fs-5';
+                } else {
+                    icon.className = 'bi bi-moon-fill text-secondary fs-5';
+                }
+            }
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            updateThemeIcon(document.documentElement.getAttribute('data-theme') || 'light');
+        });
+    </script>
+    
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
+
+
+
+

@@ -1,0 +1,118 @@
+@model BusinessManagement.Application.DTOs.LedgerDto
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "كشف دفتر الأستاذ العام";
+    var accounts = ViewBag.Accounts as IEnumerable<BusinessManagement.Application.DTOs.AccountDto> ?? new List<BusinessManagement.Application.DTOs.AccountDto>();
+    Guid selectedAccountId = ViewBag.SelectedAccountId;
+    string fromDate = ViewBag.FromDate as string ?? "";
+    string toDate = ViewBag.ToDate as string ?? "";
+}
+
+<div class="container-fluid py-4 text-right">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary pb-3">
+        <div>
+            <h4 class="text-white fw-bold m-0"><i class="bi bi-book text-primary me-2"></i> دفتر الأستاذ العام (General Ledger)</h4>
+            <p class="text-muted small m-0">تصفح حركات المدين والدائن والرصيد التراكمي المستمر لكل حساب مالي.</p>
+        </div>
+        <a href="/Accounting" class="btn btn-outline-secondary btn-sm">العودة</a>
+    </div>
+
+    <!-- Filters Block -->
+    <div class="glass-card p-3 mb-4">
+        <form method="get" action="/Accounting/Ledger" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label text-secondary small">الحساب المالي المستهدف</label>
+                <select name="accountId" class="form-select" required>
+                    @foreach (var a in accounts)
+                    {
+                        <option value="@a.Id" selected="@(a.Id == selectedAccountId)">@a.AccountCode - @a.Name (@a.Type)</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label text-secondary small">تاريخ البداية (من)</label>
+                <input type="date" name="fromDate" value="@fromDate" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label text-secondary small">تاريخ النهاية (إلى)</label>
+                <input type="date" name="toDate" value="@toDate" class="form-control" />
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel-fill"></i> تصفية</button>
+                <a href="/Accounting/Ledger" class="btn btn-outline-secondary">إعادة</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Ledger Balances Summary -->
+    @if (Model.Account != null)
+    {
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="p-3 rounded text-center border border-secondary" style="background-color: rgba(255, 255, 255, 0.01);">
+                    <small class="text-secondary d-block">الرصيد الافتتاحي (Opening)</small>
+                    <h5 class="text-white fw-bold m-0 mt-1">@Model.OpeningBalance.ToString("N2") ج.م</h5>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 rounded text-center border border-success border-opacity-25" style="background-color: rgba(16, 185, 129, 0.02);">
+                    <small class="text-secondary d-block">إجمالي مدين الفترة (Debit)</small>
+                    <h5 class="text-success fw-bold m-0 mt-1">+ @Model.TotalDebit.ToString("N2") ج.م</h5>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 rounded text-center border border-info border-opacity-25" style="background-color: rgba(59, 130, 246, 0.02);">
+                    <small class="text-secondary d-block">إجمالي دائن الفترة (Credit)</small>
+                    <h5 class="text-info fw-bold m-0 mt-1">- @Model.TotalCredit.ToString("N2") ج.م</h5>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 rounded text-center border border-primary" style="background-color: rgba(59, 130, 246, 0.08);">
+                    <small class="text-secondary d-block">الرصيد الختامي للحساب</small>
+                    <h5 class="text-primary fw-bold m-0 mt-1">@Model.ClosingBalance.ToString("N2") ج.م</h5>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transactions Ledger Table -->
+        <div class="glass-card p-4">
+            <div class="table-responsive">
+                <table class="BusinessManagement-table text-nowrap table-hover" style="font-size: 0.85rem;">
+                    <thead>
+                        <tr>
+                            <th>تاريخ الحركة</th>
+                            <th>رقم مستند القيد</th>
+                            <th>البيان / الوصف</th>
+                            <th class="text-end">مدين (Debit)</th>
+                            <th class="text-end">دائن (Credit)</th>
+                            <th class="text-end">الرصيد التراكمي المستمر</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Transactions.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">لا توجد حركات مسجلة لهذا الحساب خلال الفترة المحددة.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var t in Model.Transactions)
+                            {
+                                <tr>
+                                    <td class="text-muted">@t.EntryDate.ToString("yyyy-MM-dd")</td>
+                                    <td><a href="/Accounting/JournalEntries" class="fw-bold text-decoration-none text-white">@t.ReferenceNumber</a></td>
+                                    <td class="text-white text-wrap" style="max-width: 300px;">@t.Narration</td>
+                                    <td class="text-end text-success font-monospace">@(t.Debit > 0 ? $"+{t.Debit.ToString("N2")}" : "-")</td>
+                                    <td class="text-end text-info font-monospace">@(t.Credit > 0 ? $"-{t.Credit.ToString("N2")}" : "-")</td>
+                                    <td class="text-end fw-bold font-monospace text-white">@t.RunningBalance.ToString("N2") ج.م</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

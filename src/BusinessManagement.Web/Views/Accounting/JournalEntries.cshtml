@@ -1,0 +1,136 @@
+@model IEnumerable<BusinessManagement.Application.DTOs.JournalEntryDto>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "دفتر اليومية العامة المزدوجة";
+}
+
+<div class="container-fluid py-4 text-right">
+    @Html.AntiForgeryToken()
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary pb-3">
+        <div>
+            <h4 class="text-white fw-bold m-0"><i class="bi bi-journal-text text-primary me-2"></i> دفتر اليومية العامة (General Journal)</h4>
+            <p class="text-muted small m-0">مراجعة وتأكيد القيود المالية المزدوجة اليومية والترحيل للحسابات.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/Accounting/CreateJournalEntry" class="btn btn-primary btn-sm">
+                <i class="bi bi-file-earmark-plus-fill me-1"></i> تسجيل قيد يدوي
+            </a>
+            <a href="/Accounting" class="btn btn-outline-secondary btn-sm">العودة</a>
+        </div>
+    </div>
+
+    <!-- Journal entries list -->
+    <div class="d-flex flex-column gap-4">
+        @if (!Model.Any())
+        {
+            <div class="glass-card p-5 text-center text-muted">لا توجد أي قيود مسجلة في دفتر اليومية حالياً.</div>
+        }
+        else
+        {
+            foreach (var e in Model)
+            {
+                <div class="glass-card p-4">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 border-bottom border-secondary pb-3 mb-3">
+                        <div>
+                            <span class="badge bg-secondary mb-1">@e.ReferenceNumber</span>
+                            <h6 class="text-white fw-bold m-0">البيان: @e.Narration</h6>
+                            <small class="text-muted">تاريخ القيد: @e.EntryDate.ToString("yyyy-MM-dd") | تاريخ التسجيل: @e.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd hh:mm tt")</small>
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="text-end">
+                                <span class="d-block text-secondary small">إجمالي القيد المزدوج</span>
+                                <span class="fw-bold text-success fs-5">@e.TotalDebit.ToString("N2") ج.م</span>
+                            </div>
+                            <div>
+                                @if (e.IsPosted)
+                                {
+                                    <span class="badge bg-success py-2 px-3"><i class="bi bi-shield-fill-check me-1"></i> مرحل ومثبت</span>
+                                }
+                                else
+                                {
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-success btn-sm" onclick="postEntry('@e.Id')">ترحيل واعتماد</button>
+                                        <button class="btn btn-outline-danger btn-sm" onclick="deleteEntry('@e.Id')"><i class="bi bi-trash-fill"></i></button>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Journal lines table -->
+                    <div class="table-responsive">
+                        <table class="table table-borderless table-sm m-0" style="font-size: 0.82rem; background-color: transparent;">
+                            <thead>
+                                <tr class="text-secondary" style="border-bottom: 1px solid var(--border-color) !important;">
+                                    <th>رقم الحساب</th>
+                                    <th>اسم الحساب المالي</th>
+                                    <th class="text-end">مدين (Debit)</th>
+                                    <th class="text-end">دائن (Credit)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var line in e.Lines)
+                                {
+                                    <tr class="bg-transparent" style="border-bottom: 1px solid var(--border-color) !important;">
+                                        <td class="font-monospace">@line.AccountCode</td>
+                                        <td class="@(line.Credit > 0 ? "ps-4 text-secondary" : "text-white")">
+                                            @(line.Credit > 0 ? "← " : "")@line.AccountName
+                                        </td>
+                                        <td class="text-end text-success font-monospace">@(line.Debit > 0 ? line.Debit.ToString("N2") : "-")</td>
+                                        <td class="text-end text-info font-monospace">@(line.Credit > 0 ? line.Credit.ToString("N2") : "-")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        async function postEntry(id) {
+            if (!confirm('هل تريد ترحيل واعتماد هذا القيد محاسبياً؟')) return;
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            const response = await fetch('/Accounting/PostJournalEntry', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token
+                },
+                body: new URLSearchParams({ id: id })
+            });
+            const result = await response.json();
+            if (result.success) {
+                location.reload();
+            } else {
+                alert(result.message);
+            }
+        }
+
+        async function deleteEntry(id) {
+            if (!confirm('هل أنت متأكد من حذف مسودة القيد؟')) return;
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            const response = await fetch('/Accounting/DeleteJournalEntry', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token
+                },
+                body: new URLSearchParams({ id: id })
+            });
+            const result = await response.json();
+            if (result.success) {
+                location.reload();
+            } else {
+                alert(result.message);
+            }
+        }
+    </script>
+}

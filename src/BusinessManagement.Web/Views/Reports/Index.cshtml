@@ -1,0 +1,178 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "مركز التقارير";
+}
+
+<div class="container-fluid py-4 text-right">
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary pb-3">
+        <div>
+            <h4 class="text-white fw-bold m-0"><i class="bi bi-file-earmark-bar-graph-fill text-primary me-2"></i> مركز التقارير والإحصائيات الشامل</h4>
+            <p class="text-muted small m-0">استعراض كافة التقارير التشغيلية والمالية وإحصائيات المسافرين والشركاء مع دعم التصدير والطباعة.</p>
+        </div>
+    </div>
+
+    <!-- Reports Grid -->
+    <div class="row g-4">
+        <!-- 1. Customer Reports -->
+        <div class="col-md-4">
+            <div class="glass-card p-4 h-100 d-flex flex-column">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-primary bg-opacity-10 text-primary p-3 rounded me-3">
+                        <i class="bi bi-people-fill fs-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-white fw-bold m-0">تقارير المسافرين والعملاء</h6>
+                        <span class="text-muted small">إحصائيات الجنسيات والعملاء الأكثر تكراراً.</span>
+                    </div>
+                </div>
+                <div class="mt-auto">
+                    <a href="/Reports/CustomerReport" class="btn btn-outline-primary btn-sm w-100">فتح التقرير</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Booking Reports -->
+        <div class="col-md-4">
+            <div class="glass-card p-4 h-100 d-flex flex-column">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-success bg-opacity-10 text-success p-3 rounded me-3">
+                        <i class="bi bi-journal-bookmark-fill fs-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-white fw-bold m-0">تقارير الحجوزات والرحلات</h6>
+                        <span class="text-muted small">تفاصيل الحجوزات وقيم المبيعات المحققة.</span>
+                    </div>
+                </div>
+                <div class="mt-auto">
+                    <a href="/Reports/BookingReport" class="btn btn-outline-success btn-sm w-100">فتح التقرير</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Visa Reports -->
+        <div class="col-md-4">
+            <div class="glass-card p-4 h-100 d-flex flex-column">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-info bg-opacity-10 text-info p-3 rounded me-3">
+                        <i class="bi bi-passport-fill fs-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-white fw-bold m-0">تقارير التأشيرات والبوابات</h6>
+                        <span class="text-muted small">إحصائيات تذاكر B2C و VIP وباركود البوابات.</span>
+                    </div>
+                </div>
+                <div class="mt-auto">
+                    <a href="/Reports/VisaReport" class="btn btn-outline-info btn-sm w-100">فتح التقرير</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Cash Reports -->
+        <div class="col-md-4">
+            <div class="glass-card p-4 h-100 d-flex flex-column">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-warning bg-opacity-10 text-warning p-3 rounded me-3">
+                        <i class="bi bi-wallet2 fs-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-white fw-bold m-0">تقارير الصندوق والخزينة الكاش</h6>
+                        <span class="text-muted small">رصيد وحركات النقدية اليومية والعملات.</span>
+                    </div>
+                </div>
+                <div class="mt-auto">
+                    <a href="/Reports/CashReport" class="btn btn-outline-warning btn-sm w-100">فتح التقرير</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Expense Reports -->
+        <div class="col-md-4">
+            <div class="glass-card p-4 h-100 d-flex flex-column">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-danger bg-opacity-10 text-danger p-3 rounded me-3">
+                        <i class="bi bi-dash-circle-fill fs-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-white fw-bold m-0">تقارير المصروفات التشغيلية</h6>
+                        <span class="text-muted small">توزيع المصروفات والمشتريات حسب الفئة.</span>
+                    </div>
+                </div>
+                <div class="mt-auto">
+                    <a href="/Reports/ExpenseReport" class="btn btn-outline-danger btn-sm w-100">فتح التقرير</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. Revenue Reports -->
+        <div class="col-md-4">
+            <div class="glass-card p-4 h-100 d-flex flex-column">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-success bg-opacity-10 text-success p-3 rounded me-3">
+                        <i class="bi bi-plus-circle-fill fs-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-white fw-bold m-0">تقارير الإيرادات والمبيعات</h6>
+                        <span class="text-muted small">مصادر الدخل وعائد حجز البرامج المختلفة.</span>
+                    </div>
+                </div>
+                <div class="mt-auto">
+                    <a href="/Reports/RevenueReport" class="btn btn-outline-success btn-sm w-100">فتح التقرير</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. Profit Reports -->
+        <div class="col-md-4">
+            <div class="glass-card p-4 h-100 d-flex flex-column">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-light bg-opacity-10 text-white p-3 rounded me-3">
+                        <i class="bi bi-graph-up-arrow fs-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-white fw-bold m-0">تقارير الأرباح وهامش الربحية</h6>
+                        <span class="text-muted small">أداء صافي الأرباح المحققة مع مخطط بياني شهري.</span>
+                    </div>
+                </div>
+                <div class="mt-auto">
+                    <a href="/Reports/ProfitReport" class="btn btn-outline-light btn-sm w-100">فتح التقرير</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 8. Partner Reports -->
+        <div class="col-md-4">
+            <div class="glass-card p-4 h-100 d-flex flex-column">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-primary bg-opacity-10 text-primary p-3 rounded me-3">
+                        <i class="bi bi-shield-check fs-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-white fw-bold m-0">تقارير الشركاء وحصص رأس المال</h6>
+                        <span class="text-muted small">إحصائيات المساهمات وحصص الأرباح المستحقة.</span>
+                    </div>
+                </div>
+                <div class="mt-auto">
+                    <a href="/Reports/PartnerReport" class="btn btn-outline-primary btn-sm w-100">فتح التقرير</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 9. Periodic Reports (Daily / Monthly / Annual) -->
+        <div class="col-md-4">
+            <div class="glass-card p-4 h-100 d-flex flex-column">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-info bg-opacity-10 text-info p-3 rounded me-3">
+                        <i class="bi bi-calendar3 fs-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-white fw-bold m-0">التقارير الدورية (يومية / شهرية / سنوية)</h6>
+                        <span class="text-muted small">مقارنة الحركات والنتائج المالية عبر فترات زمنية.</span>
+                    </div>
+                </div>
+                <div class="mt-auto">
+                    <a href="/Reports/PeriodicReport" class="btn btn-outline-info btn-sm w-100">فتح التقرير</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

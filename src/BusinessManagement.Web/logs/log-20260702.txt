@@ -1,0 +1,261 @@
+2026-07-02 12:24:06.002 +03:00 [WRN] Dropping existing database schemas to apply travel operations schema...
+2026-07-02 12:24:06.721 +03:00 [WRN] Entity 'Attachment' has a global query filter defined and is the required end of a relationship with the entity 'AttachmentLink'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-07-02 12:24:06.724 +03:00 [WRN] Entity 'Booking' has a global query filter defined and is the required end of a relationship with the entity 'BookingCost'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-07-02 12:24:06.732 +03:00 [WRN] Entity 'Booking' has a global query filter defined and is the required end of a relationship with the entity 'BookingSnapshot'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-07-02 12:24:06.732 +03:00 [WRN] Entity 'Booking' has a global query filter defined and is the required end of a relationship with the entity 'BookingStatusHistory'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-07-02 12:24:06.732 +03:00 [WRN] Entity 'Account' has a global query filter defined and is the required end of a relationship with the entity 'JournalEntryLine'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-07-02 12:24:06.732 +03:00 [WRN] Entity 'User' has a global query filter defined and is the required end of a relationship with the entity 'UserRole'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-07-02 12:24:07.048 +03:00 [INF] Initializing database tables and seed lookups...
+2026-07-02 12:24:07.964 +03:00 [INF] Database initialized successfully!
+2026-07-02 12:41:36.646 +03:00 [WRN] Failed to determine the https port for redirect.
+2026-07-02 12:41:36.986 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:41:36.986 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:41:36.986 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:41:36.986 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:41:36.986 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:41:36.990 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:41:36.992 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:41:36.984 +03:00 [ERR] An unhandled exception occurred during request /BusinessManagement.Web.styles.css
+System.IO.FileNotFoundException: Could not find file 'D:\omarWeb\src\BusinessManagement.Web\wwwroot\BusinessManagement.Web.styles.css'.
+File name: 'D:\omarWeb\src\BusinessManagement.Web\wwwroot\BusinessManagement.Web.styles.css'
+   at System.IO.FileInfo.get_Length()
+   at Microsoft.AspNetCore.Builder.StaticAssetDevelopmentRuntimeHandler.<>c__DisplayClass3_0.<<AttachRuntimePatching>b__0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Localization.RequestLocalizationMiddleware.Invoke(HttpContext context)
+   at BusinessManagement.Web.Middlewares.ExceptionHandlingMiddleware.InvokeAsync(HttpContext context) in D:\omarWeb\src\BusinessManagement.Web\Middlewares\ExceptionHandlingMiddleware.cs:line 25
+2026-07-02 12:41:37.161 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:41:40.087 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:41:40.090 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:41:40.089 +03:00 [ERR] An unhandled exception occurred during request /BusinessManagement.Web.styles.css
+System.IO.FileNotFoundException: Could not find file 'D:\omarWeb\src\BusinessManagement.Web\wwwroot\BusinessManagement.Web.styles.css'.
+File name: 'D:\omarWeb\src\BusinessManagement.Web\wwwroot\BusinessManagement.Web.styles.css'
+   at System.IO.FileInfo.get_Length()
+   at Microsoft.AspNetCore.Builder.StaticAssetDevelopmentRuntimeHandler.<>c__DisplayClass3_0.<<AttachRuntimePatching>b__0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Localization.RequestLocalizationMiddleware.Invoke(HttpContext context)
+   at BusinessManagement.Web.Middlewares.ExceptionHandlingMiddleware.InvokeAsync(HttpContext context) in D:\omarWeb\src\BusinessManagement.Web\Middlewares\ExceptionHandlingMiddleware.cs:line 25
+2026-07-02 12:41:40.094 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:41:40.098 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:41:40.098 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:41:40.098 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:41:40.144 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:41:40.192 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:41:48.974 +03:00 [INF] Attempting login for user: admin
+2026-07-02 12:41:49.557 +03:00 [WRN] Login failed: Incorrect password for user: admin
+2026-07-02 12:41:49.582 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:41:49.582 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:41:49.582 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:41:49.582 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:41:49.582 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:41:49.582 +03:00 [ERR] An unhandled exception occurred during request /BusinessManagement.Web.styles.css
+System.IO.FileNotFoundException: Could not find file 'D:\omarWeb\src\BusinessManagement.Web\wwwroot\BusinessManagement.Web.styles.css'.
+File name: 'D:\omarWeb\src\BusinessManagement.Web\wwwroot\BusinessManagement.Web.styles.css'
+   at System.IO.FileInfo.get_Length()
+   at Microsoft.AspNetCore.Builder.StaticAssetDevelopmentRuntimeHandler.<>c__DisplayClass3_0.<<AttachRuntimePatching>b__0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Localization.RequestLocalizationMiddleware.Invoke(HttpContext context)
+   at BusinessManagement.Web.Middlewares.ExceptionHandlingMiddleware.InvokeAsync(HttpContext context) in D:\omarWeb\src\BusinessManagement.Web\Middlewares\ExceptionHandlingMiddleware.cs:line 25
+2026-07-02 12:41:49.585 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:41:49.585 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:41:49.700 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:41:56.592 +03:00 [INF] Attempting login for user: admin
+2026-07-02 12:41:56.664 +03:00 [INF] User admin logged in successfully
+2026-07-02 12:41:56.670 +03:00 [INF] Authenticated user session created for 'admin'
+2026-07-02 12:41:56.685 +03:00 [INF] Loading Hajj & Umrah dashboard statistics. Partner filter: Admin
+2026-07-02 12:41:56.688 +03:00 [INF] Compiling dashboard operations cache. User: Admin
+2026-07-02 12:41:56.870 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:41:56.870 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:41:56.871 +03:00 [ERR] An unhandled exception occurred during request /BusinessManagement.Web.styles.css
+System.IO.FileNotFoundException: Could not find file 'D:\omarWeb\src\BusinessManagement.Web\wwwroot\BusinessManagement.Web.styles.css'.
+File name: 'D:\omarWeb\src\BusinessManagement.Web\wwwroot\BusinessManagement.Web.styles.css'
+   at System.IO.FileInfo.get_Length()
+   at Microsoft.AspNetCore.Builder.StaticAssetDevelopmentRuntimeHandler.<>c__DisplayClass3_0.<<AttachRuntimePatching>b__0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Localization.RequestLocalizationMiddleware.Invoke(HttpContext context)
+   at BusinessManagement.Web.Middlewares.ExceptionHandlingMiddleware.InvokeAsync(HttpContext context) in D:\omarWeb\src\BusinessManagement.Web\Middlewares\ExceptionHandlingMiddleware.cs:line 25
+2026-07-02 12:41:56.872 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:41:56.872 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:41:56.872 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:41:56.873 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:41:57.066 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:42:11.103 +03:00 [INF] Loading Hajj & Umrah dashboard statistics. Partner filter: Admin
+2026-07-02 12:42:11.103 +03:00 [INF] Compiling dashboard operations cache. User: Admin
+2026-07-02 12:42:11.126 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:42:11.126 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:42:11.126 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:42:11.126 +03:00 [ERR] An unhandled exception occurred during request /BusinessManagement.Web.styles.css
+System.IO.FileNotFoundException: Could not find file 'D:\omarWeb\src\BusinessManagement.Web\wwwroot\BusinessManagement.Web.styles.css'.
+File name: 'D:\omarWeb\src\BusinessManagement.Web\wwwroot\BusinessManagement.Web.styles.css'
+   at System.IO.FileInfo.get_Length()
+   at Microsoft.AspNetCore.Builder.StaticAssetDevelopmentRuntimeHandler.<>c__DisplayClass3_0.<<AttachRuntimePatching>b__0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Localization.RequestLocalizationMiddleware.Invoke(HttpContext context)
+   at BusinessManagement.Web.Middlewares.ExceptionHandlingMiddleware.InvokeAsync(HttpContext context) in D:\omarWeb\src\BusinessManagement.Web\Middlewares\ExceptionHandlingMiddleware.cs:line 25
+2026-07-02 12:42:11.126 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:42:11.127 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:42:11.129 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 12:42:11.213 +03:00 [WRN] The application is not running against the published output and Static Web Assets are not enabled. To configure static web assets in other environments, call 'StaticWebAssetsLoader.UseStaticWebAssets(IWebHostEnvironment, IConfiguration)' to enable them.
+2026-07-02 14:31:36.769 +03:00 [WRN] Dropping existing database schemas to apply travel operations schema...
+2026-07-02 14:31:38.845 +03:00 [WRN] Entity 'Attachment' has a global query filter defined and is the required end of a relationship with the entity 'AttachmentLink'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-07-02 14:31:38.854 +03:00 [WRN] Entity 'Booking' has a global query filter defined and is the required end of a relationship with the entity 'BookingCost'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-07-02 14:31:38.856 +03:00 [WRN] Entity 'Booking' has a global query filter defined and is the required end of a relationship with the entity 'BookingSnapshot'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-07-02 14:31:38.859 +03:00 [WRN] Entity 'Booking' has a global query filter defined and is the required end of a relationship with the entity 'BookingStatusHistory'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-07-02 14:31:38.861 +03:00 [WRN] Entity 'Account' has a global query filter defined and is the required end of a relationship with the entity 'JournalEntryLine'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-07-02 14:31:38.864 +03:00 [WRN] Entity 'User' has a global query filter defined and is the required end of a relationship with the entity 'UserRole'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-07-02 14:31:40.180 +03:00 [INF] Initializing database tables and seed lookups...
+2026-07-02 14:31:41.987 +03:00 [INF] Database initialized successfully!
+2026-07-02 14:32:08.412 +03:00 [WRN] Failed to determine the https port for redirect.
+2026-07-02 14:32:08.624 +03:00 [INF] Loading Hajj & Umrah dashboard statistics. Partner filter: Admin
+2026-07-02 14:32:08.633 +03:00 [INF] Compiling dashboard operations cache. User: Admin
+2026-07-02 14:32:24.112 +03:00 [INF] User 'admin' signed out successfully.
+2026-07-02 14:32:26.891 +03:00 [INF] Attempting login for user: admin
+2026-07-02 14:32:27.298 +03:00 [WRN] Login failed: Incorrect password for user: admin
+2026-07-02 14:32:34.384 +03:00 [INF] Attempting login for user: admin
+2026-07-02 14:32:34.430 +03:00 [INF] User admin logged in successfully
+2026-07-02 14:32:34.442 +03:00 [INF] Authenticated user session created for 'admin'
+2026-07-02 14:32:34.459 +03:00 [INF] Loading Hajj & Umrah dashboard statistics. Partner filter: Admin
+2026-07-02 14:32:34.462 +03:00 [INF] Compiling dashboard operations cache. User: Admin
+2026-07-02 14:32:40.066 +03:00 [INF] Loading employee directory. User: admin
+2026-07-02 14:32:40.079 +03:00 [INF] Fetching all users
+2026-07-02 14:32:40.203 +03:00 [INF] Fetching all departments
+2026-07-02 14:32:41.940 +03:00 [INF] Loading bookings log. Partner filter: All
+2026-07-02 14:32:41.950 +03:00 [INF] Fetching bookings list. Partner filter: All
+2026-07-02 14:32:48.937 +03:00 [INF] Loading traveler booking form.
+2026-07-02 14:32:48.948 +03:00 [INF] Fetching all passengers list.
+2026-07-02 14:34:18.419 +03:00 [WRN] Dropping existing database schemas to apply travel operations schema...
+2026-07-02 14:34:20.309 +03:00 [WRN] Entity 'Attachment' has a global query filter defined and is the required end of a relationship with the entity 'AttachmentLink'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-07-02 14:34:20.321 +03:00 [WRN] Entity 'Booking' has a global query filter defined and is the required end of a relationship with the entity 'BookingCost'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-07-02 14:34:20.324 +03:00 [WRN] Entity 'Booking' has a global query filter defined and is the required end of a relationship with the entity 'BookingSnapshot'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-07-02 14:34:20.328 +03:00 [WRN] Entity 'Booking' has a global query filter defined and is the required end of a relationship with the entity 'BookingStatusHistory'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-07-02 14:34:20.331 +03:00 [WRN] Entity 'Account' has a global query filter defined and is the required end of a relationship with the entity 'JournalEntryLine'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-07-02 14:34:20.335 +03:00 [WRN] Entity 'User' has a global query filter defined and is the required end of a relationship with the entity 'UserRole'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-07-02 14:34:21.912 +03:00 [INF] Initializing database tables and seed lookups...
+2026-07-02 14:34:23.977 +03:00 [INF] Database initialized successfully!
+2026-07-02 14:34:24.508 +03:00 [WRN] Failed to determine the https port for redirect.
+2026-07-02 14:34:24.763 +03:00 [INF] Loading Hajj & Umrah dashboard statistics. Partner filter: Admin
+2026-07-02 14:34:24.777 +03:00 [INF] Compiling dashboard operations cache. User: Admin
+2026-07-02 14:34:38.702 +03:00 [INF] Loading Hajj & Umrah dashboard statistics. Partner filter: Admin
+2026-07-02 14:34:38.705 +03:00 [INF] Compiling dashboard operations cache. User: Admin
+2026-07-02 14:38:58.936 +03:00 [INF] Loading Hajj & Umrah dashboard statistics. Partner filter: Admin
+2026-07-02 14:38:58.938 +03:00 [INF] Compiling dashboard operations cache. User: Admin
+2026-07-02 14:39:15.574 +03:00 [INF] Loading Hajj & Umrah dashboard statistics. Partner filter: Admin
+2026-07-02 14:39:15.579 +03:00 [INF] Compiling dashboard operations cache. User: Admin
+2026-07-02 14:44:30.741 +03:00 [INF] Loading employee directory. User: admin
+2026-07-02 14:44:30.747 +03:00 [INF] Fetching all users
+2026-07-02 14:44:30.992 +03:00 [INF] Fetching all departments
+2026-07-02 14:46:28.907 +03:00 [INF] User 'admin' signed out successfully.
+2026-07-02 14:50:56.724 +03:00 [WRN] Dropping existing database schemas to apply travel operations schema...
+2026-07-02 14:50:59.539 +03:00 [INF] Initializing database tables and seed lookups...
+2026-07-02 14:51:01.132 +03:00 [INF] Database initialized successfully!
+2026-07-02 14:51:47.890 +03:00 [WRN] Failed to determine the https port for redirect.
+2026-07-02 14:51:54.263 +03:00 [INF] Attempting login for user: admin
+2026-07-02 14:51:55.316 +03:00 [INF] User admin logged in successfully
+2026-07-02 14:51:55.331 +03:00 [INF] Authenticated user session created for 'admin'
+2026-07-02 14:51:55.379 +03:00 [INF] Loading Hajj & Umrah dashboard statistics. Partner filter: Admin
+2026-07-02 14:51:55.385 +03:00 [INF] Compiling dashboard operations cache. User: Admin
+2026-07-02 14:52:23.724 +03:00 [INF] Loading Hajj & Umrah dashboard statistics. Partner filter: Admin
+2026-07-02 14:52:23.724 +03:00 [INF] Compiling dashboard operations cache. User: Admin
+2026-07-02 14:52:25.828 +03:00 [INF] Loading Hajj & Umrah dashboard statistics. Partner filter: Admin
+2026-07-02 14:52:25.828 +03:00 [INF] Compiling dashboard operations cache. User: Admin
+2026-07-02 14:58:21.849 +03:00 [WRN] Dropping existing database schemas to apply travel operations schema...
+2026-07-02 14:58:24.772 +03:00 [INF] Initializing database tables and seed lookups...
+2026-07-02 14:58:26.592 +03:00 [INF] Database initialized successfully!
+2026-07-02 14:59:49.462 +03:00 [WRN] Failed to determine the https port for redirect.
+2026-07-02 14:59:49.658 +03:00 [INF] Loading Hajj & Umrah dashboard statistics. Partner filter: Admin
+2026-07-02 14:59:49.668 +03:00 [INF] Compiling dashboard operations cache. User: Admin
+2026-07-02 15:01:35.244 +03:00 [WRN] Dropping existing database schemas to apply travel operations schema...
+2026-07-02 15:01:38.191 +03:00 [INF] Initializing database tables and seed lookups...
+2026-07-02 15:01:39.983 +03:00 [INF] Database initialized successfully!
+2026-07-02 15:01:43.850 +03:00 [WRN] Failed to determine the https port for redirect.
+2026-07-02 15:01:44.059 +03:00 [INF] Loading Hajj & Umrah dashboard statistics. Partner filter: Admin
+2026-07-02 15:01:44.071 +03:00 [INF] Compiling dashboard operations cache. User: Admin
+2026-07-02 15:05:14.848 +03:00 [WRN] Dropping existing database schemas to apply travel operations schema...
+2026-07-02 15:05:17.623 +03:00 [INF] Initializing database tables and seed lookups...
+2026-07-02 15:05:19.692 +03:00 [INF] Database initialized successfully!
+2026-07-02 15:06:04.935 +03:00 [WRN] Failed to determine the https port for redirect.
+2026-07-02 15:06:05.164 +03:00 [INF] Loading bookings log. Partner filter: All
+2026-07-02 15:06:05.171 +03:00 [INF] Fetching bookings list. Partner filter: All
+2026-07-02 15:06:07.187 +03:00 [INF] Loading bookings log. Partner filter: All
+2026-07-02 15:06:07.187 +03:00 [INF] Fetching bookings list. Partner filter: All
+2026-07-02 15:06:08.146 +03:00 [INF] Loading bookings log. Partner filter: All
+2026-07-02 15:06:08.146 +03:00 [INF] Fetching bookings list. Partner filter: All
+2026-07-02 15:06:08.384 +03:00 [INF] Loading bookings log. Partner filter: All
+2026-07-02 15:06:08.385 +03:00 [INF] Fetching bookings list. Partner filter: All
+2026-07-02 15:06:08.603 +03:00 [INF] Loading bookings log. Partner filter: All
+2026-07-02 15:06:08.603 +03:00 [INF] Fetching bookings list. Partner filter: All
+2026-07-02 15:06:08.803 +03:00 [INF] Loading bookings log. Partner filter: All
+2026-07-02 15:06:08.803 +03:00 [INF] Fetching bookings list. Partner filter: All
+2026-07-02 15:06:14.812 +03:00 [INF] Loading Hajj & Umrah dashboard statistics. Partner filter: Admin
+2026-07-02 15:06:14.822 +03:00 [INF] Compiling dashboard operations cache. User: Admin
+2026-07-02 15:07:22.171 +03:00 [WRN] Dropping existing database schemas to apply travel operations schema...
+2026-07-02 15:07:25.107 +03:00 [INF] Initializing database tables and seed lookups...
+2026-07-02 15:07:26.941 +03:00 [INF] Database initialized successfully!
+2026-07-02 18:07:49.070 +03:00 [WRN] Dropping existing database schemas to apply travel operations schema...
+2026-07-02 18:07:52.750 +03:00 [INF] Initializing database tables and seed lookups...
+2026-07-02 18:07:54.776 +03:00 [INF] Database initialized successfully!
+2026-07-02 18:08:06.527 +03:00 [WRN] Failed to determine the https port for redirect.
+2026-07-02 18:08:06.772 +03:00 [INF] Loading Hajj & Umrah dashboard statistics. Partner filter: Admin
+2026-07-02 18:08:06.788 +03:00 [INF] Compiling dashboard operations cache. User: Admin
+2026-07-02 18:08:17.408 +03:00 [INF] Fetching all passengers list.
+2026-07-02 21:15:42.842 +03:00 [WRN] Dropping existing database schemas to apply travel operations schema...
+2026-07-02 21:15:46.148 +03:00 [INF] Initializing database tables and seed lookups...
+2026-07-02 21:15:48.160 +03:00 [INF] Database initialized successfully!
+2026-07-02 21:15:57.176 +03:00 [WRN] Failed to determine the https port for redirect.
+2026-07-02 21:15:57.429 +03:00 [INF] Loading Hajj & Umrah dashboard statistics. Partner filter: Admin
+2026-07-02 21:15:57.444 +03:00 [INF] Compiling dashboard operations cache. User: Admin
+2026-07-02 23:35:06.761 +03:00 [WRN] Dropping existing database schemas to apply travel operations schema...
+2026-07-02 23:35:08.797 +03:00 [INF] Initializing database tables and seed lookups...
+2026-07-02 23:35:09.863 +03:00 [INF] Database initialized successfully!
+2026-07-02 23:35:24.907 +03:00 [WRN] Failed to determine the https port for redirect.
+2026-07-02 23:35:25.017 +03:00 [INF] Loading Hajj & Umrah dashboard statistics. Partner filter: Admin
+2026-07-02 23:35:25.024 +03:00 [INF] Compiling dashboard operations cache. User: Admin
+2026-07-02 23:36:04.235 +03:00 [INF] Loading employee directory. User: admin
+2026-07-02 23:36:04.239 +03:00 [INF] Fetching all users
+2026-07-02 23:36:04.552 +03:00 [INF] Fetching all departments
+2026-07-02 23:36:08.434 +03:00 [INF] Loading bookings log. Partner filter: All
+2026-07-02 23:36:08.439 +03:00 [INF] Fetching bookings list. Partner filter: All
+2026-07-02 23:36:11.276 +03:00 [INF] Loading traveler booking form.
+2026-07-02 23:36:11.280 +03:00 [INF] Fetching all passengers list.
+2026-07-02 23:36:49.182 +03:00 [INF] Fetching all passengers list.
+2026-07-02 23:38:41.528 +03:00 [INF] Fetching all passengers list.
+2026-07-02 23:39:16.932 +03:00 [WRN] Dropping existing database schemas to apply travel operations schema...
+2026-07-02 23:39:19.801 +03:00 [INF] Initializing database tables and seed lookups...
+2026-07-02 23:39:21.582 +03:00 [INF] Database initialized successfully!
+2026-07-02 23:39:21.978 +03:00 [WRN] Failed to determine the https port for redirect.
+2026-07-02 23:39:22.169 +03:00 [INF] Fetching all passengers list.
+2026-07-02 23:39:23.436 +03:00 [INF] Loading Hajj & Umrah dashboard statistics. Partner filter: Admin
+2026-07-02 23:39:23.449 +03:00 [INF] Compiling dashboard operations cache. User: Admin
+2026-07-02 23:39:25.977 +03:00 [INF] Fetching all passengers list.
+2026-07-02 23:40:04.515 +03:00 [WRN] Dropping existing database schemas to apply travel operations schema...
+2026-07-02 23:40:07.333 +03:00 [INF] Initializing database tables and seed lookups...
+2026-07-02 23:40:09.041 +03:00 [INF] Database initialized successfully!
+2026-07-02 23:40:09.504 +03:00 [WRN] Failed to determine the https port for redirect.
+2026-07-02 23:40:09.728 +03:00 [INF] Fetching all passengers list.
+2026-07-02 23:40:17.786 +03:00 [INF] Fetching all passengers list.
+2026-07-02 23:40:18.518 +03:00 [INF] Loading external visas directory. User: admin
+2026-07-02 23:40:18.525 +03:00 [INF] Retrieving all external visa registries.
+2026-07-02 23:40:21.796 +03:00 [INF] Fetching all passengers list.
+2026-07-02 23:48:26.402 +03:00 [WRN] Dropping existing database schemas to apply travel operations schema...
+2026-07-02 23:48:29.329 +03:00 [INF] Initializing database tables and seed lookups...
+2026-07-02 23:48:31.008 +03:00 [INF] Database initialized successfully!
+2026-07-02 23:48:38.217 +03:00 [WRN] Failed to determine the https port for redirect.
+2026-07-02 23:48:38.462 +03:00 [INF] Fetching all passengers list.
+2026-07-02 23:49:17.251 +03:00 [INF] Creating passenger: fd, Passport: d541
+2026-07-02 23:49:18.998 +03:00 [INF] Fetching all passengers list.
+2026-07-02 23:51:33.212 +03:00 [INF] Creating passenger: jd, Passport: a51264
+2026-07-02 23:51:34.271 +03:00 [INF] Fetching all passengers list.
+2026-07-02 23:51:44.104 +03:00 [INF] Loading traveler booking form.
+2026-07-02 23:51:44.106 +03:00 [INF] Fetching all passengers list.
+2026-07-02 23:59:23.138 +03:00 [INF] Loading employee directory. User: admin
+2026-07-02 23:59:23.148 +03:00 [INF] Fetching all users
+2026-07-02 23:59:23.437 +03:00 [INF] Fetching all departments

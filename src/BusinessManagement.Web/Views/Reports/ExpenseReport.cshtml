@@ -1,0 +1,93 @@
+@model BusinessManagement.Application.DTOs.ExpenseReportDto
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "تقرير المصروفات التشغيلية";
+    string fromDate = ViewBag.FromDate;
+    string toDate = ViewBag.ToDate;
+}
+
+<div class="container-fluid py-4 text-right">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary pb-3">
+        <div>
+            <h4 class="text-white fw-bold m-0"><i class="bi bi-dash-circle-fill text-danger me-2"></i> تقرير المصروفات التشغيلية والخدمية</h4>
+            <p class="text-muted small m-0">بيان إحصائي بنسب توزيع المصروفات والمشتريات التشغيلية للفترات الزمنية المحددة.</p>
+        </div>
+        <div class="d-flex gap-2 no-print">
+            <a href="/Reports/ExportExpenseExcel?fromDate=@fromDate&toDate=@toDate" class="btn btn-outline-success btn-sm"><i class="bi bi-file-earmark-excel"></i> تصدير Excel</a>
+            <button onclick="window.print();" class="btn btn-outline-info btn-sm"><i class="bi bi-printer"></i> طباعة / PDF</button>
+            <a href="/Reports" class="btn btn-outline-secondary btn-sm">العودة</a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="glass-card p-3 mb-4 no-print">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label text-secondary small">من تاريخ</label>
+                <input type="date" name="fromDate" value="@fromDate" class="form-control" />
+            </div>
+            <div class="col-md-5">
+                <label class="form-label text-secondary small">إلى تاريخ</label>
+                <input type="date" name="toDate" value="@toDate" class="form-control" />
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel"></i> تصفية</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="glass-card p-4 border-start border-danger border-4">
+                <small class="text-muted">إجمالي المصروفات التشغيلية للفترة</small>
+                <h2 class="text-danger fw-bold m-0 mt-1">@Model.TotalExpenses.ToString("N2") ج.م</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Breakdown Table -->
+    <div class="glass-card p-4">
+        <h6 class="text-white fw-bold mb-3 border-bottom border-secondary pb-2">تفصيل توزيع المصروفات حسب فئة الحساب المالي</h6>
+        <div class="table-responsive">
+            <table class="BusinessManagement-table">
+                <thead>
+                    <tr>
+                        <th>كود الحساب</th>
+                        <th>اسم فئة المصروف</th>
+                        <th class="text-end">المبلغ المصروف</th>
+                        <th class="text-end">النسبة من إجمالي المصاريف</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.ExpensesByCategory.Any())
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">لم تسجل أي بنود مصروفات للفترة المحددة.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var e in Model.ExpensesByCategory)
+                        {
+                            <tr>
+                                <td class="text-muted font-monospace">@e.AccountCode</td>
+                                <td class="fw-bold text-white">@e.CategoryName</td>
+                                <td class="text-end text-danger font-monospace">@e.Amount.ToString("N2") ج.م</td>
+                                <td class="text-end">
+                                    <div class="d-flex align-items-center justify-content-end gap-2">
+                                        <span class="text-white fw-bold">@e.Percentage.ToString("F1")%</span>
+                                        <div class="progress w-25" style="height: 6px; background-color: rgba(255,255,255,0.05);">
+                                            <div class="progress-bar bg-danger" role="progressbar" style="width: @(e.Percentage)%;"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

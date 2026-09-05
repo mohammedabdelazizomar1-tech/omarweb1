@@ -1,0 +1,120 @@
+@model IEnumerable<BusinessManagement.Application.DTOs.MonthlyClosingDto>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "إقفال الفترات المحاسبية";
+}
+
+<div class="container-fluid py-4 text-right" style="max-width: 800px;">
+    @Html.AntiForgeryToken()
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary pb-3">
+        <div>
+            <h4 class="text-white fw-bold m-0"><i class="bi bi-calendar-check text-primary me-2"></i> إقفال الفترات والأشهر المحاسبية (Monthly Closing)</h4>
+            <p class="text-muted small m-0">تجميد أو فك حظر تسجيل قيود اليومية أو تعديل الحجوزات والمدفوعات للفترات المغلقة.</p>
+        </div>
+        <a href="/Accounting" class="btn btn-outline-secondary btn-sm">العودة</a>
+    </div>
+
+    @if (ViewBag.SuccessMessage != null)
+    {
+        <div class="alert alert-success border-0 small mb-4 py-2" style="background-color: rgba(16, 185, 129, 0.1); color: #34d399;">
+            @ViewBag.SuccessMessage
+        </div>
+    }
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div class="alert alert-danger border-0 small mb-4 py-2" style="background-color: rgba(239, 68, 68, 0.1); color: #f87171;">
+            @ViewBag.ErrorMessage
+        </div>
+    }
+
+    <!-- Quick Close Month Panel -->
+    <div class="glass-card p-4 mb-4">
+        <h6 class="text-white fw-bold mb-3">إقفال فترة محاسبية جديدة</h6>
+        <form asp-action="CloseMonth" method="post" class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label text-secondary small">السنة المالية *</label>
+                <select name="year" class="form-select" required>
+                    <option value="2026" selected>2026</option>
+                    <option value="2027">2027</option>
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label text-secondary small">الشهر المستهدف *</label>
+                <select name="month" class="form-select" required>
+                    @for (int m = 1; m <= 12; m++)
+                    {
+                        <option value="@m" selected="@(m == DateTime.Today.Month)">الشهر @m (@(new DateTime(2026, m, 1).ToString("MMMM", new System.Globalization.CultureInfo("ar-EG"))))</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-danger w-100" onclick="return confirm('هل تريد إقفال هذا الشهر محاسبياً؟ سيقوم النظام بتجميد كل الحركات ولن يُسمح بالتعديل فيها.')">تجميد وإقفال</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Monthly Closings Logs Table -->
+    <div class="glass-card p-4">
+        <h6 class="text-white fw-bold mb-3">حالات وسجل الفترات المغلقة</h6>
+        <div class="table-responsive">
+            <table class="BusinessManagement-table text-nowrap table-hover" style="font-size: 0.85rem;">
+                <thead>
+                    <tr>
+                        <th>الفترة (الشهر/السنة)</th>
+                        <th>حالة الإقفال</th>
+                        <th>تاريخ الإقفال</th>
+                        <th>الموظف المسؤول</th>
+                        <th class="text-end">الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">لم يتم إقفال أي أشهر مالية حتى الآن. جميع الأشهر مفتوحة محاسبياً.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var c in Model)
+                        {
+                            <tr>
+                                <td class="fw-bold text-white">الشهر @c.Month / @c.Year</td>
+                                <td>
+                                    @if (c.IsClosed)
+                                    {
+                                        <span class="badge bg-danger"><i class="bi bi-lock-fill me-1"></i> مغلق ومجمد</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success"><i class="bi bi-unlock-fill me-1"></i> مفتوح للحركات</span>
+                                    }
+                                </td>
+                                <td class="text-muted">@c.ClosedAt.ToLocalTime().ToString("yyyy-MM-dd hh:mm tt")</td>
+                                <td class="text-white">@c.ClosedBy</td>
+                                <td class="text-end">
+                                    @if (c.IsClosed)
+                                    {
+                                        <form asp-action="ReopenMonth" method="post" style="display:inline;">
+                                            <input type="hidden" name="year" value="@c.Year" />
+                                            <input type="hidden" name="month" value="@c.Month" />
+                                            <button type="submit" class="btn btn-sm btn-outline-success" onclick="return confirm('هل تريد إعادة فتح هذا الشهر والسماح بالتعديل في حركاته؟')">
+                                                إعادة فتح الشهر
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">نشط ومفتوح</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,288 @@
+@model IEnumerable<BusinessManagement.Application.DTOs.PartnershipCapitalDto>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "رأس مال الشركاء";
+    var profitShares = ViewBag.ProfitShares as IEnumerable<BusinessManagement.Application.DTOs.PartnerQuotaMetric> ?? new List<BusinessManagement.Application.DTOs.PartnerQuotaMetric>();
+}
+
+<!-- Capital & Shares tabs -->
+<ul class="nav nav-pills gap-2 mb-4" id="partnerTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="btn btn-outline-primary active px-4" id="capital-tab" data-bs-toggle="tab" data-bs-target="#capital-content" type="button" role="tab" aria-selected="true">
+            <i class="bi bi-shield-check me-2"></i> رأس مال الشركاء (الضمان)
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="btn btn-outline-primary px-4" id="profit-tab" data-bs-toggle="tab" data-bs-target="#profit-content" type="button" role="tab" aria-selected="false">
+            <i class="bi bi-wallet-fill me-2"></i> محاسب توزيع أرباح الموسم
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="btn btn-outline-primary px-4" id="metrics-tab" data-bs-toggle="tab" data-bs-target="#metrics-content" type="button" role="tab" aria-selected="false">
+            <i class="bi bi-bar-chart-line-fill me-2"></i> حصص وأرقام التشغيل الفعلية
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="partnerTabsContent">
+    
+    <!-- Tab 1: Capital Structure -->
+    <div class="tab-pane fade show active" id="capital-content" role="tabpanel" aria-labelledby="capital-tab">
+        <div class="glass-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h5 class="text-white fw-bold m-0">هيكل رأس المال والمساهمة للشركاء</h5>
+                    <p class="text-muted small m-0">مراجعة وتدقيق إيداعات رأس مال الشركاء وأسعار الصرف التاريخية للودائع</p>
+                </div>
+                
+                <button class="btn btn-primary" onclick="openCreateCapitalModal()">
+                    <i class="bi bi-plus-circle-fill me-2"></i> إضافة إيداع رأسمالي
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="BusinessManagement-table">
+                    <thead>
+                        <tr>
+                            <th>اسم المساهم / الشريك</th>
+                            <th class="text-end">رأس المال (SAR)</th>
+                            <th class="text-end">رأس المال (EGP)</th>
+                            <th class="text-end">سعر الصرف التاريخي</th>
+                            <th class="text-center">نسبة المساهمة في رأس المال</th>
+                            <th class="text-center">نسبة توزيع الأرباح</th>
+                            <th>البيان والملاحظات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var c in Model)
+                        {
+                            <tr>
+                                <td class="fw-bold text-white">@c.ShareholderName</td>
+                                <td class="text-end text-white">@c.AmountSar.ToString("N2") ر.س</td>
+                                <td class="text-end text-white">@c.AmountEgp.ToString("N2") ج.م</td>
+                                <td class="text-end font-monospace text-muted">@c.HistoricalRate</td>
+                                <td class="text-center fw-semibold text-info">@((c.ShareRatio * 100).ToString("N4"))%</td>
+                                <td class="text-center fw-semibold text-success">@((c.ProfitShareRatio * 100).ToString("N2"))%</td>
+                                <td>@(string.IsNullOrEmpty(c.Notes) ? "-" : c.Notes)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 2: Profit Calculator -->
+    <div class="tab-pane fade" id="profit-content" role="tabpanel" aria-labelledby="profit-tab">
+        <div class="glass-card p-4">
+            <h5 class="text-white fw-bold mb-3">محاسب توزيع صافي أرباح الموسم</h5>
+            <div class="row g-3 align-items-end mb-4">
+                <div class="col-md-6">
+                    <label class="form-label">إجمالي صافي أرباح الموسم المراد توزيعها ($)</label>
+                    <input type="number" id="seasonProfitInput" class="form-control text-success fw-bold fs-5" value="100000" oninput="recalculateSeasonDistributions(this.value)" />
+                </div>
+                <div class="col-md-6">
+                    <div class="p-2 rounded text-end text-secondary small bg-dark bg-opacity-25" style="border: 1px dashed var(--border-color);">
+                        تُحسب وتُوزع حصة كل شريك آلياً في الجدول أدناه بناءً على نسب الأرباح المقيدة لكل شريك.
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="BusinessManagement-table">
+                    <thead>
+                        <tr>
+                            <th>اسم المساهم / الشريك</th>
+                            <th class="text-center">نسبة توزيع الأرباح</th>
+                            <th class="text-end fw-bold">حصة الأرباح الموزعة المستحقة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var c in Model)
+                        {
+                            <tr class="calc-profit-row" data-ratio="@c.ProfitShareRatio">
+                                <td class="fw-bold text-white">@c.ShareholderName</td>
+                                <td class="text-center text-success">@((c.ProfitShareRatio * 100).ToString("N2"))%</td>
+                                <td class="text-end fw-bold text-success calc-profit-share-cell">$0.00</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 3: Dynamic Operational Metrics -->
+    <div class="tab-pane fade" id="metrics-content" role="tabpanel" aria-labelledby="metrics-tab">
+        <div class="glass-card p-4">
+            <h5 class="text-white fw-bold mb-2">إحصائيات الأداء وحصص التشغيل الفعلية للشركاء</h5>
+            <p class="text-muted small mb-4">كشف حساب فوري للأرقام التشغيلية والمالية المسجلة فعلياً في قاعدة البيانات لكل شريك</p>
+
+            <div class="table-responsive">
+                <table class="BusinessManagement-table">
+                    <thead>
+                        <tr>
+                            <th>اسم الشريك / المساهم</th>
+                            <th class="text-center">عدد الحجوزات</th>
+                            <th class="text-center">بوابات بـ QR</th>
+                            <th class="text-center">بدون QR</th>
+                            <th class="text-center">الاستهلاك من الكوتا الكلية</th>
+                            <th class="text-end">أرباح الحجوزات الفعلية</th>
+                            <th class="text-end">إجمالي المحصل</th>
+                            <th class="text-end text-warning">المتبقي طرف العملاء</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in profitShares)
+                        {
+                            <tr>
+                                <td class="fw-bold text-white">@p.PartnerName</td>
+                                <td class="text-center text-white">@p.BookingsCount</td>
+                                <td class="text-center text-success">@p.QrCount</td>
+                                <td class="text-center text-muted">@p.NonQrCount</td>
+                                <td class="text-center">
+                                    @if (p.QuotaLimit > 0)
+                                    {
+                                        <span class="fw-bold @(p.BookingsCount >= p.QuotaLimit ? "text-danger" : "text-info")">
+                                            @p.BookingsCount / @p.QuotaLimit (@(((double)p.BookingsCount / p.QuotaLimit * 100).ToString("N0"))%)
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td class="text-end text-success fw-semibold">@p.TotalProfit.ToString("N2") ج.م</td>
+                                <td class="text-end text-white">@p.CollectedPayments.ToString("N2") ج.م</td>
+                                <td class="text-end text-warning fw-semibold">@p.RemainingBalance.ToString("N2") ج.م</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Dialog Container for Capital Entry -->
+<div class="modal fade" id="capitalModalElement" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">تسجيل إيداع رأس مال شريك</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-controller="Partnership" asp-action="Create" method="post" onsubmit="submitCapitalForm(event, this)">
+                @Html.AntiForgeryToken()
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label">اسم المساهم / الشريك *</label>
+                        <select name="ShareholderName" class="form-select" required>
+                            <option value="">اختر المساهم / الشريك...</option>
+                            @if (ViewBag.Partners is IEnumerable<BusinessManagement.Application.DTOs.PartnerQuotaMetric> partnerMetrics)
+                            {
+                                foreach (var p in partnerMetrics)
+                                {
+                                    <option value="@p.PartnerName">@p.PartnerName</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">قيمة الإيداع بالريال السعودي *</label>
+                            <input type="number" name="AmountSar" class="form-control" required value="0" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">قيمة الإيداع بالجنيه المصري *</label>
+                            <input type="number" name="AmountEgp" class="form-control" required value="0" />
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">سعر الصرف التاريخي للاستلام *</label>
+                            <input type="number" name="HistoricalRate" step="0.0001" class="form-control" value="13.0" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">نسبة المساهمة في رأس المال (من 0 إلى 1) *</label>
+                            <input type="number" name="ShareRatio" step="0.000001" class="form-control" required placeholder="مثال: 0.2198" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">نسبة المشاركة في الأرباح (من 0 إلى 1) *</label>
+                        <input type="number" name="ProfitShareRatio" step="0.000001" class="form-control" required placeholder="مثال: 0.2125" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">ملاحظات وتفاصيل الدفعة البنكية</label>
+                        <textarea name="Notes" class="form-control" rows="2" placeholder="أدخل تفاصيل الإيداع البنكي أو إيصال استلام النقدية..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-2"></i> حفظ وقيد الوديعة الرأسمالية
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Profit calculations
+        function recalculateSeasonDistributions(totalVal) {
+            const total = parseFloat(totalVal) || 0;
+            const rows = document.querySelectorAll(".calc-profit-row");
+
+            rows.forEach(row => {
+                const ratio = parseFloat(row.getAttribute("data-ratio")) || 0;
+                const cell = row.querySelector(".calc-profit-share-cell");
+                const shareValue = total * ratio;
+                cell.textContent = `$${shareValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            });
+        }
+
+        // Initialize distributions
+        document.addEventListener("DOMContentLoaded", () => {
+            const initialVal = document.getElementById("seasonProfitInput").value;
+            recalculateSeasonDistributions(initialVal);
+        });
+
+        // Open modal
+        function openCreateCapitalModal() {
+            const modalEl = document.getElementById("capitalModalElement");
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+        }
+
+        // Submit form via AJAX
+        async function submitCapitalForm(event, form) {
+            event.preventDefault();
+            const formData = new FormData(form);
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
+
+            try {
+                const result = await BusinessManagementAjax(form.action, form.method, formData);
+                if (result.success) {
+                    BusinessManagementAlert(result.message, "success");
+                    const modalEl = document.getElementById("capitalModalElement");
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    modal.hide();
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    BusinessManagementAlert(result.message, "danger");
+                    submitBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error("Capital submit error:", error);
+                submitBtn.disabled = false;
+            }
+        }
+    </script>
+}
+
+
+
+

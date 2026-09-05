@@ -1,0 +1,223 @@
+@model IEnumerable<BusinessManagement.Application.DTOs.JournalEntryDto>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "الحسابات العامة واليومية المزدوجة";
+}
+
+<div class="container-fluid py-4 text-right">
+    <!-- Header Block -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <h4 class="text-white fw-bold m-0"><i class="bi bi-bank2 text-primary me-2"></i> الإدارة المالية والحسابات العامة</h4>
+            <p class="text-muted small m-0">إدارة القيد المزدوج، دفتر اليومية، دفاتر الأستاذ التفصيلية، إقفال الحسابات وتوزيع الأرباح.</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="/Accounting/CreateJournalEntry" class="btn btn-primary btn-sm">
+                <i class="bi bi-file-earmark-plus-fill me-1"></i> إضافة قيد يومية
+            </a>
+            <a href="/Accounting/DistributeProfit" class="btn btn-outline-success btn-sm">
+                <i class="bi bi-gift-fill me-1"></i> توزيع الأرباح على الشركاء
+            </a>
+            <a href="/Accounting/MonthlyClosing" class="btn btn-outline-warning btn-sm">
+                <i class="bi bi-calendar-check me-1"></i> إقفال الحسابات الشهرية
+            </a>
+        </div>
+    </div>
+
+    @if (ViewBag.SuccessMessage != null)
+    {
+        <div class="alert alert-success border-0 small mb-4 py-2" style="background-color: rgba(16, 185, 129, 0.1); color: #34d399;">
+            @ViewBag.SuccessMessage
+        </div>
+    }
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div class="alert alert-danger border-0 small mb-4 py-2" style="background-color: rgba(239, 68, 68, 0.1); color: #f87171;">
+            @ViewBag.ErrorMessage
+        </div>
+    }
+
+    <!-- Financial KPIs -->
+    <div class="row g-3 mb-4">
+        <!-- Cash EGP -->
+        <div class="col-md-4">
+            <div class="glass-card p-3 d-flex align-items-center justify-content-between">
+                <div>
+                    <small class="text-secondary d-block">نقدية الصندوق (ج.م)</small>
+                    <h4 class="text-white fw-bold m-0 mt-1">@(((decimal)ViewBag.CashEgp).ToString("N2")) ج.م</h4>
+                </div>
+                <div class="bg-primary bg-opacity-10 p-3 rounded-circle text-primary">
+                    <i class="bi bi-cash fs-3"></i>
+                </div>
+            </div>
+        </div>
+        <!-- Cash SAR -->
+        <div class="col-md-4">
+            <div class="glass-card p-3 d-flex align-items-center justify-content-between">
+                <div>
+                    <small class="text-secondary d-block">نقدية الصندوق (ر.س)</small>
+                    <h4 class="text-white fw-bold m-0 mt-1">@(((decimal)ViewBag.CashSar).ToString("N2")) ر.س</h4>
+                </div>
+                <div class="bg-success bg-opacity-10 p-3 rounded-circle text-success">
+                    <i class="bi bi-cash-coin fs-3"></i>
+                </div>
+            </div>
+        </div>
+        <!-- Assets -->
+        <div class="col-md-4">
+            <div class="glass-card p-3 d-flex align-items-center justify-content-between">
+                <div>
+                    <small class="text-secondary d-block">إجمالي قيمة الأصول النشطة</small>
+                    <h4 class="text-white fw-bold m-0 mt-1">@(((decimal)ViewBag.TotalAssets).ToString("N2")) ج.م</h4>
+                </div>
+                <div class="bg-info bg-opacity-10 p-3 rounded-circle text-info">
+                    <i class="bi bi-graph-up-arrow fs-3"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reports Quick Links -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-sm-6">
+            <a href="/Accounting/ChartOfAccounts" class="glass-card p-3 text-center d-block text-decoration-none h-100 card-hover">
+                <i class="bi bi-diagram-3 fs-3 text-primary mb-2 d-block"></i>
+                <span class="text-white fw-semibold">شجرة دليل الحسابات</span>
+            </a>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <a href="/Accounting/Ledger" class="glass-card p-3 text-center d-block text-decoration-none h-100 card-hover">
+                <i class="bi bi-book fs-3 text-success mb-2 d-block"></i>
+                <span class="text-white fw-semibold">دفتر الأستاذ العام</span>
+            </a>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <a href="/Accounting/IncomeStatement" class="glass-card p-3 text-center d-block text-decoration-none h-100 card-hover">
+                <i class="bi bi-file-earmark-spreadsheet fs-3 text-info mb-2 d-block"></i>
+                <span class="text-white fw-semibold">قائمة الأرباح والخسائر</span>
+            </a>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <a href="/Accounting/BalanceSheet" class="glass-card p-3 text-center d-block text-decoration-none h-100 card-hover">
+                <i class="bi bi-balance-scale fs-3 text-warning mb-2 d-block"></i>
+                <span class="text-white fw-semibold">الميزانية العمومية</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Recent Journal Entries -->
+    <div class="glass-card p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="text-white fw-bold m-0"><i class="bi bi-journal-text text-primary me-2"></i> آخر قيود اليومية العامة</h5>
+            <a href="/Accounting/JournalEntries" class="btn btn-outline-secondary btn-sm">عرض دفتر اليومية بالكامل</a>
+        </div>
+
+        <div class="table-responsive">
+            <table class="BusinessManagement-table text-nowrap table-hover" style="font-size: 0.85rem;">
+                <thead>
+                    <tr>
+                        <th>رقم القيد</th>
+                        <th>تاريخ القيد</th>
+                        <th>شرح القيد (البيان)</th>
+                        <th class="text-end">المدين</th>
+                        <th class="text-end">الدائن</th>
+                        <th class="text-center">الحالة</th>
+                        <th class="text-end">العمليات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">لا توجد قيود يومية مسجلة حالياً.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var e in Model)
+                        {
+                            <tr>
+                                <td class="fw-bold text-white">@e.ReferenceNumber</td>
+                                <td class="text-muted">@e.EntryDate.ToString("yyyy-MM-dd")</td>
+                                <td class="text-white text-wrap" style="max-width: 250px;">@e.Narration</td>
+                                <td class="text-end text-success fw-semibold">@e.TotalDebit.ToString("N2") ج.م</td>
+                                <td class="text-end text-info fw-semibold">@e.TotalCredit.ToString("N2") ج.م</td>
+                                <td class="text-center">
+                                    @if (e.IsPosted)
+                                    {
+                                        <span class="badge bg-success">مرحل ومرحّب</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">مسودة (غير مرحل)</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        @if (!e.IsPosted)
+                                        {
+                                            <button class="btn btn-sm btn-outline-success" onclick="postEntry('@e.Id')" title="اعتماد وترحيل القيد">
+                                                <i class="bi bi-check-lg"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteEntry('@e.Id')" title="حذف القيد">
+                                                <i class="bi bi-trash-fill"></i>
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small"><i class="bi bi-lock-fill"></i> مؤمن</span>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        async function postEntry(id) {
+            if (!confirm('هل تريد ترحيل واعتماد هذا القيد؟ بعد الترحيل، سيتم تحديث أرصدة الأستاذ ولا يمكن حذف القيد.')) return;
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            const response = await fetch('/Accounting/PostJournalEntry', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token
+                },
+                body: new URLSearchParams({ id: id })
+            });
+            const result = await response.json();
+            if (result.success) {
+                location.reload();
+            } else {
+                alert(result.message);
+            }
+        }
+
+        async function deleteEntry(id) {
+            if (!confirm('هل أنت متأكد من حذف مسودة القيد نهائياً؟')) return;
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            const response = await fetch('/Accounting/DeleteJournalEntry', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token
+                },
+                body: new URLSearchParams({ id: id })
+            });
+            const result = await response.json();
+            if (result.success) {
+                location.reload();
+            } else {
+                alert(result.message);
+            }
+        }
+    </script>
+}

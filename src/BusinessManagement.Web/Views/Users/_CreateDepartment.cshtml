@@ -1,0 +1,35 @@
+@model BusinessManagement.Application.DTOs.CreateDepartmentDto
+
+<div class="modal fade" id="userModalElement" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content text-start" style="direction: rtl;">
+            <div class="modal-header border-bottom border-secondary border-opacity-25">
+                <h5 class="modal-title text-white fw-bold">
+                    <i class="bi bi-diagram-3-fill me-2 text-primary"></i> إضافة قسم جديد
+                </h5>
+                <button type="button" class="btn-close ms-0 me-auto" data-bs-dismiss="modal" aria-label="إغلاق" style="filter: invert(1);"></button>
+            </div>
+            <form asp-controller="Users" asp-action="CreateDepartment" method="post" onsubmit="submitUserForm(event, this)">
+                @Html.AntiForgeryToken()
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label text-light fw-semibold">اسم القسم *</label>
+                        <input asp-for="Name" class="form-control" placeholder="مثال: قسم المبيعات والحجوزات" />
+                        <span asp-validation-for="Name" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label text-light fw-semibold">الوصف / المسؤوليات</label>
+                        <textarea asp-for="Description" class="form-control" rows="3" placeholder="أدخل وصفاً اختياري لمسؤوليات وسلطة هذا القسم..."></textarea>
+                        <span asp-validation-for="Description" class="text-danger small"></span>
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-secondary border-opacity-25">
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-save-fill me-2"></i> حفظ وتأكيد القسم
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

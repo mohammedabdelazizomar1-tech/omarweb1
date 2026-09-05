@@ -1,0 +1,353 @@
+@model IEnumerable<BusinessManagement.Application.DTOs.ExternalVisaDto>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "سجل التأشيرات الخارجي";
+}
+
+<div class="glass-card p-4">
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+        <div>
+            <h5 class="text-white fw-bold m-0">سجل تأشيرات خارجي (الطرف الثالث)</h5>
+            <p class="text-muted small m-0">مراجعة ملفات التأشيرات وتذاكر طيران والعمولات والاتفاقيات الخاصة بالوكلاء الخارجيين</p>
+        </div>
+        
+        <div class="d-flex align-items-center gap-2">
+            <div class="input-group" style="width: 250px;">
+                <span class="input-group-text bg-transparent border-end-0" style="border-color: var(--border-color); color: var(--text-secondary);">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text" id="visaSearch" class="form-control border-start-0 text-white" placeholder="ابحث عن مسافر..." autocomplete="off" />
+            </div>
+            
+            <button class="btn btn-primary" onclick="openCreateVisaModal()">
+                <i class="bi bi-file-earmark-plus-fill me-2"></i> تسجيل تأشيرة خارجي
+            </button>
+        </div>
+    </div>
+
+    <!-- spreadsheet layout table -->
+    <div class="table-responsive" style="max-height: 550px; overflow-y: auto;">
+        <table class="BusinessManagement-table text-nowrap table-hover" id="visasTable" style="font-size: 0.85rem;">
+            <thead class="sticky-top bg-light" style="z-index: 1;">
+                <tr>
+                    <th>اسم المسافر بالكامل</th>
+                    <th>التبعية (السمسار / الوكيل)</th>
+                    <th class="text-end">نت (المنصة)</th>
+                    <th class="text-end">باركود</th>
+                    <th class="text-end">عم خيري</th>
+                    <th class="text-end">الاتفاقية</th>
+                    <th class="text-end">تذكرة الطيران</th>
+                    <th class="text-end">المطار</th>
+                    <th class="text-end">الباص</th>
+                    <th class="text-end fw-bold">إجمالي التكلفة</th>
+                    <th class="text-end fw-bold text-info">سعر البيع</th>
+                    <th class="text-end fw-bold text-success">صافي الربح</th>
+                    <th class="text-end text-success">المدفوع</th>
+                    <th class="text-end text-warning">المتبقي</th>
+                    <th class="text-end">العمليات</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model == null || !Model.Any())
+                {
+                    <tr>
+                        <td colspan="15" class="text-center text-muted py-5">لا توجد سجلات تأشيرات خارجي مسجلة حالياً.</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var v in Model)
+                    {
+                        <tr class="visa-row">
+                            <td class="fw-bold text-white">@v.PassengerName</td>
+                            <td class="fw-semibold text-white">@v.Affiliation</td>
+                            <td class="text-end">$@v.NetCost.ToString("N2")</td>
+                            <td class="text-end">$@v.BarcodeCost.ToString("N2")</td>
+                            <td class="text-end">$@v.AgentCommission.ToString("N2")</td>
+                            <td class="text-end">$@v.AgreementCost.ToString("N2")</td>
+                            <td class="text-end">$@v.TicketCost.ToString("N2")</td>
+                            <td class="text-end">$@v.AirportCost.ToString("N2")</td>
+                            <td class="text-end">$@v.BusCost.ToString("N2")</td>
+                            <td class="text-end fw-bold text-white">$@v.TotalCost.ToString("N2")</td>
+                            <td class="text-end fw-bold text-info">$@v.SellingPrice.ToString("N2")</td>
+                            <td class="text-end fw-bold text-success">$@v.NetProfit.ToString("N2")</td>
+                            <td class="text-end text-success">$@v.AmountPaid.ToString("N2")</td>
+                            <td class="text-end text-warning fw-semibold">$@v.RemainingBalance.ToString("N2")</td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteVisa('@v.Id')">
+                                    <i class="bi bi-trash-fill"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Dialog Container for External Visa creation -->
+<div class="modal fade" id="visaModalElement" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-white fw-bold">تسجيل حجز تأشيرة خارجي جديدة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: invert(1);"></button>
+            </div>
+            <form asp-controller="ExternalVisas" asp-action="Create" method="post" onsubmit="submitVisaForm(event, this)">
+                @Html.AntiForgeryToken()
+                <div class="modal-body p-4">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">اسم المسافر بالكامل *</label>
+                            <select name="PassengerName" id="PassengerName" class="form-select" required>
+                                <option value="">اختر المسافر...</option>
+                                @if (ViewBag.Passengers is IEnumerable<BusinessManagement.Application.DTOs.PassengerDto> passengerList)
+                                {
+                                    foreach (var p in passengerList)
+                                    {
+                                        <option value="@p.FullName" data-partner-id="@p.PartnerId">@p.FullName (@p.PassportNumber)</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">التبعية (السمسار / الوكيل) *</label>
+                            <select name="Affiliation" id="Affiliation" class="form-select" required>
+                                <option value="">اختر الشريك...</option>
+                                @if (ViewBag.Partners is IEnumerable<BusinessManagement.Application.DTOs.PartnerQuotaMetric> partnerList)
+                                {
+                                    foreach (var pt in partnerList)
+                                    {
+                                        <option value="@pt.PartnerName" data-partner-id="@pt.PartnerId">@pt.PartnerName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-3 col-sm-6">
+                            <label class="form-label">نت (المنصة)</label>
+                            <input type="number" name="NetCost" step="0.01" class="form-control calc-trigger" value="0" />
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <label class="form-label">تكلفة الباركود</label>
+                            <input type="number" name="BarcodeCost" step="0.01" class="form-control calc-trigger" value="0" />
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <label class="form-label">عمولة (عم خيري)</label>
+                            <input type="number" name="AgentCommission" step="0.01" class="form-control calc-trigger" value="0" />
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <label class="form-label">الاتفاقية</label>
+                            <input type="number" name="AgreementCost" step="0.01" class="form-control calc-trigger" value="0" />
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <label class="form-label">تذكرة الطيران</label>
+                            <input type="number" name="TicketCost" step="0.01" class="form-control calc-trigger" value="0" />
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <label class="form-label">تكلفة المطار</label>
+                            <input type="number" name="AirportCost" step="0.01" class="form-control calc-trigger" value="0" />
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <label class="form-label">الباص / الانتقالات</label>
+                            <input type="number" name="BusCost" step="0.01" class="form-control calc-trigger" value="0" />
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">إجمالي التكلفة المحسوبة</label>
+                            <input type="text" id="hudTotalCost" class="form-control bg-dark text-white" readonly value="$0.00" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">سعر البيع للعميل *</label>
+                            <input type="number" name="SellingPrice" id="sellingPriceInput" step="0.01" class="form-control calc-trigger" required placeholder="0.00" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">صافي الأرباح المتوقعة</label>
+                            <input type="text" id="hudNetProfit" class="form-control bg-dark text-success fw-bold" readonly value="$0.00" />
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">المبالغ المسددة *</label>
+                            <input type="number" name="AmountPaid" id="amountPaidInput" step="0.01" class="form-control calc-trigger" required placeholder="0.00" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">الرصيد المتبقي</label>
+                            <input type="text" id="hudRemaining" class="form-control bg-dark text-warning fw-bold" readonly value="$0.00" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">ملاحظات وتفاصيل التأشيرة</label>
+                        <input type="text" name="Notes" class="form-control" placeholder="تعليمات خاصة، حالات استلام جواز السفر..." />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-2"></i> حفظ وقيد التأشيرة
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Client-side search filters
+        document.getElementById("visaSearch").addEventListener("input", (e) => {
+            const query = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll(".visa-row");
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(query) ? "" : "none";
+            });
+        });
+
+        // Open modal
+        function openCreateVisaModal() {
+            const modalEl = document.getElementById("visaModalElement");
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+        }
+
+        // Live calculations inside modal
+        function calculateVisaSums() {
+            const modal = document.getElementById("visaModalElement");
+            const net = parseFloat(modal.querySelector('input[name="NetCost"]').value) || 0;
+            const barcode = parseFloat(modal.querySelector('input[name="BarcodeCost"]').value) || 0;
+            const commission = parseFloat(modal.querySelector('input[name="AgentCommission"]').value) || 0;
+            const agreement = parseFloat(modal.querySelector('input[name="AgreementCost"]').value) || 0;
+            const ticket = parseFloat(modal.querySelector('input[name="TicketCost"]').value) || 0;
+            const airport = parseFloat(modal.querySelector('input[name="AirportCost"]').value) || 0;
+            const bus = parseFloat(modal.querySelector('input[name="BusCost"]').value) || 0;
+
+            const price = parseFloat(document.getElementById("sellingPriceInput").value) || 0;
+            const paid = parseFloat(document.getElementById("amountPaidInput").value) || 0;
+
+            const totalCost = net + barcode + commission + agreement + ticket + airport + bus;
+            const profit = price - totalCost;
+            const remaining = price - paid;
+
+            document.getElementById("hudTotalCost").value = `$${totalCost.toFixed(2)}`;
+            document.getElementById("hudNetProfit").value = `$${profit.toFixed(2)}`;
+            document.getElementById("hudRemaining").value = `$${remaining.toFixed(2)}`;
+        }
+
+        // Bind calculation listeners in modal
+        document.addEventListener("DOMContentLoaded", () => {
+            const modal = document.getElementById("visaModalElement");
+            modal.querySelectorAll(".calc-trigger").forEach(input => {
+                input.addEventListener("input", calculateVisaSums);
+            });
+        });
+
+        // Submit form via AJAX
+        async function submitVisaForm(event, form) {
+            event.preventDefault();
+            const formData = new FormData(form);
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
+
+            try {
+                const result = await BusinessManagementAjax(form.action, form.method, formData);
+                if (result.success) {
+                    BusinessManagementAlert(result.message, "success");
+                    const modalEl = document.getElementById("visaModalElement");
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    modal.hide();
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    BusinessManagementAlert(result.message, "danger");
+                    submitBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error("External visa submit error:", error);
+                submitBtn.disabled = false;
+            }
+        }
+
+        // AJAX Deletion
+        async function deleteVisa(id) {
+            if (window.Swal) {
+                const swalResult = await Swal.fire({
+                    title: 'تأكيد الحذف',
+                    text: 'هل أنت متأكد من حذف ملف حجز التأشيرة الخارجي هذا؟',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'نعم، احذف',
+                    cancelButtonText: 'إلغاء',
+                    customClass: {
+                        popup: 'bms-swal-confirm',
+                        confirmButton: 'btn btn-danger',
+                        cancelButton: 'btn btn-outline-secondary'
+                    },
+                    buttonsStyling: false
+                });
+
+                if (!swalResult.isConfirmed) return;
+            } else {
+                if (!confirm("هل أنت متأكد من حذف ملف حجز التأشيرة الخارجي هذا؟")) {
+                    return;
+                }
+            }
+
+            try {
+                const result = await BusinessManagementAjax(`/ExternalVisas/Delete/${id}`, "POST");
+                if (result.success) {
+                    BusinessManagementAlert(result.message, "success");
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    BusinessManagementAlert(result.message, "danger");
+                }
+            } catch (error) {
+                console.error("Visa delete error:", error);
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const affiliationSelect = document.getElementById("Affiliation");
+            const passengerSelect = document.getElementById("PassengerName");
+
+            if (affiliationSelect && passengerSelect) {
+                const allOptions = Array.from(passengerSelect.options);
+
+                function filterPassengers() {
+                    const selectedOption = affiliationSelect.options[affiliationSelect.selectedIndex];
+                    const selectedPartnerId = selectedOption ? selectedOption.getAttribute("data-partner-id") : "";
+                    const currentValue = passengerSelect.value;
+
+                    passengerSelect.innerHTML = "";
+
+                    // Add placeholder
+                    passengerSelect.appendChild(allOptions[0]);
+
+                    allOptions.forEach((opt, idx) => {
+                        if (idx === 0) return;
+                        const optPartnerId = opt.getAttribute("data-partner-id");
+                        if (!selectedPartnerId || optPartnerId === selectedPartnerId) {
+                            passengerSelect.appendChild(opt);
+                        }
+                    });
+
+                    if (Array.from(passengerSelect.options).some(o => o.value === currentValue)) {
+                        passengerSelect.value = currentValue;
+                    } else {
+                        passengerSelect.selectedIndex = 0;
+                    }
+                }
+
+                affiliationSelect.addEventListener("change", filterPassengers);
+                filterPassengers();
+            }
+        });
+    </script>
+}
+
+
+
+
